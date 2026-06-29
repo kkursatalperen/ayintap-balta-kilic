@@ -206,6 +206,186 @@ backend:
         - working: true
           agent: "testing"
           comment: "TESTED: Orders and admin stats working correctly. POST /api/orders creates order with orderNumber starting with 'ABK-', admin orders list includes new orders, admin stats returns orderCount, productCount, userCount, totalSales. Admin protection working (401 without auth, 403 for customer role)."
+  - task: "Multi-step checkout order creation (Phase 2)"
+    implemented: true
+    working: true
+    file: "app/api/[[...path]]/route.js, app/odeme/CheckoutFlow.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "POST /api/orders now accepts shippingMethod, shippingAddress, extraFee. Initial statusHistory entry created. Order can be created by guest (no auth) or authenticated user (userId populated). Test that all fields persisted correctly."
+        - working: true
+          agent: "testing"
+          comment: "TESTED: Multi-step checkout working perfectly. Guest order creation (userId=null, status=pending_payment, statusHistory initialized with 1 entry, shippingMethod=standard). Authenticated order creation (userId populated correctly). Public order lookup by orderNumber working. All fields (shippingMethod, extraFee, shippingAddress) persisted correctly."
+  - task: "User /me endpoints (profile, orders, change-password)"
+    implemented: true
+    working: true
+    file: "app/api/[[...path]]/route.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "GET /api/me/orders returns only logged user's orders. PUT /api/me/profile updates name+phone. POST /api/me/change-password requires correct oldPassword. All require auth (401 without)."
+        - working: true
+          agent: "testing"
+          comment: "TESTED: All ME endpoints working correctly. Auth protection (401 without token) verified for all endpoints. PUT /api/me/profile updates name+phone correctly, email field NOT changed (protected). POST /api/me/change-password rejects wrong oldPassword (401), rejects short password (400), successfully changes password with correct oldPassword, login with new password verified. GET /api/me/orders returns only user's own orders."
+  - task: "Favorites toggle endpoint"
+    implemented: true
+    working: true
+    file: "app/api/[[...path]]/route.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "GET /api/me/favorites returns enriched product list. POST /api/me/favorites with {productId} toggles (returns added:true|false). Requires auth."
+        - working: true
+          agent: "testing"
+          comment: "TESTED: Favorites toggle working perfectly. Auth protection (401 without token) verified. GET /api/me/favorites returns empty array when no favorites. POST /api/me/favorites adds favorite (returns {added:true}). POST again toggles off (returns {added:false}). GET /api/me/favorites returns enriched product list with full product details (name, price, images, etc.)."
+  - task: "Addresses CRUD endpoints"
+    implemented: true
+    working: true
+    file: "app/api/[[...path]]/route.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "GET/POST /api/me/addresses; PUT/DELETE /api/me/addresses/:id. isDefault flag: setting isDefault=true should unset other defaults for same user. Requires auth."
+        - working: true
+          agent: "testing"
+          comment: "TESTED: Addresses CRUD fully functional. Auth protection (401 without token) verified. GET /api/me/addresses returns empty array initially. POST creates address with all fields. POST second address with isDefault=true correctly unsets previous default. PUT updates address fields while preserving others. DELETE removes address. DELETE with another user's address ID correctly filtered by userId (not deleted)."
+  - task: "Password reset flow"
+    implemented: true
+    working: true
+    file: "app/api/[[...path]]/route.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "POST /api/auth/forgot-password always returns ok (anti-enumeration). Generates resetToken stored in user doc with resetExpires (1h). POST /api/auth/reset-password with {token, password} verifies token + expiry, updates passwordHash, clears resetToken."
+        - working: true
+          agent: "testing"
+          comment: "TESTED: Password reset flow working perfectly. POST /api/auth/forgot-password with existing email returns 200 and stores resetToken+resetExpires in DB. POST with non-existent email also returns 200 (anti-enumeration working). POST /api/auth/reset-password with invalid token returns 400. POST with valid token successfully resets password and clears resetToken. POST with short password (<6 chars) returns 400."
+  - task: "Email verification flow"
+    implemented: true
+    working: true
+    - agent: "main"
+      message: |
+        Faz 2, 4, 5 backend implementation tamamlandı + Multi-step checkout UI eklendi.
+        
+        Test edilmesi gereken YENI endpoint'ler:
+        
+        AUTH FLOW (Phase 2):
+        1. POST /api/auth/forgot-password { email } → always 200 (anti-enumeration)
+           - Eğer e-posta varsa user dokümanında resetToken+resetExpires set edilir
+        2. POST /api/auth/reset-password { token, password } → 400 if invalid/expired, 200 + clears token if ok
+        3. POST /api/auth/send-verification (auth required) → user.verifyToken set
+        4. POST /api/auth/verify-email { token } → user.emailVerified=true
+        
+        ME ENDPOINTS (Phase 2, all require auth):
+        5. PUT /api/me/profile { name, phone } → updates user, returns safe user obj
+        6. POST /api/me/change-password { oldPassword, newPassword } → 401 if wrong oldPassword, 200 + updates hash if ok
+        7. GET /api/me/orders → returns only own orders
+        8. GET /api/me/favorites → returns enriched products
+        9. POST /api/me/favorites { productId } → toggles (returns {added: true|false})
+        10. GET /api/me/addresses → returns sorted (isDefault desc, createdAt desc)
+        11. POST /api/me/addresses { title, fullName, phone, city, district, addressLine, isDefault } → creates
+        12. PUT /api/me/addresses/:id → updates (isDefault=true unsets others)
+        13. DELETE /api/me/addresses/:id → deletes
+        
+        ORDERS (Phase 2 + Phase 4):
+        14. POST /api/orders now supports shippingMethod, extraFee, full guest checkout
+            - userId is null for guest, populated for authenticated user
+            - statusHistory initialized with one entry
+        15. PUT /api/admin/orders/:id (admin) supports:
+            - status change (auto-pushes to statusHistory with optional note)
+            - trackingCode + trackingCarrier
+            - paymentStatus
+        16. GET /api/orders/:key (public) → looks up by id OR orderNumber
+        
+        BLOG (Phase 5):
+        17. GET /api/blog (public) → only isPublished=true posts sorted by publishedAt desc
+        18. GET /api/blog/:slug (public) → 404 if not published or not exist
+        19. GET/POST/PUT/DELETE /api/admin/blog (admin) → full CRUD
+            - PUT toggling isPublished=true (from false) should set publishedAt
+        
+        SEO ROUTES (Phase 5):
+        20. GET /sitemap.xml → returns Content-Type: application/xml with valid sitemap
+        21. GET /robots.txt → returns Content-Type: text/plain with Disallow /admin /api /profil
+        
+        Admin: admin@ayintap.com / Ayintap2025!
+        Base URL: from .env NEXT_PUBLIC_BASE_URL
+        
+        Lütfen tüm yeni endpoint'leri test et, edge case'lere dikkat:
+        - Unauthorized access (no token) → 401
+        - Customer trying admin endpoints → 403
+        - Invalid token reset → 400
+        - Toggle favorite twice → first {added:true}, second {added:false}
+        - Setting address isDefault=true → other addresses for same user lose isDefault
+
+    file: "app/api/[[...path]]/route.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "POST /api/auth/send-verification (requires auth) stores verifyToken. POST /api/auth/verify-email with {token} sets emailVerified=true. No expiry on verify token by design."
+        - working: true
+          agent: "testing"
+          comment: "TESTED: Email verification flow working perfectly. POST /api/auth/send-verification without auth returns 401. POST with auth returns 200 and stores verifyToken in DB. POST /api/auth/verify-email with invalid token returns 400. POST with valid token returns 200 and sets emailVerified=true, clears verifyToken."
+  - task: "Order status update + tracking (Phase 4)"
+    implemented: true
+    working: true
+    file: "app/api/[[...path]]/route.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "PUT /api/admin/orders/:id accepts status, trackingCode, trackingCarrier, paymentStatus, note. When status changes, pushes entry to statusHistory[]. Requires admin auth."
+        - working: true
+          agent: "testing"
+          comment: "TESTED: Order status update working perfectly. PUT /api/admin/orders/:id without auth returns 401. PUT as customer returns 403. PUT as admin successfully updates status, trackingCode, trackingCarrier, and pushes new entry to statusHistory (now has 2 entries). PUT with same status does NOT grow statusHistory (correctly prevents duplicate entries). All tracking fields persisted correctly."
+  - task: "Blog CMS endpoints (Phase 5)"
+    implemented: true
+    working: true
+    file: "app/api/[[...path]]/route.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Public: GET /api/blog (only isPublished=true), GET /api/blog/:slug. Admin: GET /api/admin/blog (all), POST/PUT/DELETE /api/admin/blog[/:id]. When PUT changes isPublished from false->true, publishedAt should be set."
+        - working: true
+          agent: "testing"
+          comment: "TESTED: Blog CMS endpoints fully functional. GET /api/blog returns only published posts sorted by publishedAt desc. GET /api/blog/:slug returns post correctly. POST /api/admin/blog without auth returns 401, as customer returns 403. POST as admin creates post with publishedAt set when isPublished=true. PUT /api/admin/blog/:id toggling isPublished from false->true correctly sets publishedAt. PUT updating title works. DELETE removes post (404 on subsequent GET)."
+  - task: "Sitemap.xml and robots.txt"
+    implemented: true
+    working: true
+    file: "app/sitemap.xml/route.js, app/robots.txt/route.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "/sitemap.xml returns valid XML with static + product + blog + category URLs. /robots.txt returns proper text/plain with Disallow rules."
+        - working: true
+          agent: "testing"
+          comment: "TESTED: SEO routes working perfectly. GET /sitemap.xml returns 200 with Content-Type: application/xml, contains valid XML structure (<?xml, <urlset>, <url>, <loc> tags). GET /robots.txt returns 200 with Content-Type: text/plain, contains Disallow: /admin rule and Sitemap: URL."
 
 frontend:
   - task: "Dynamic CMS homepage rendering"
@@ -225,12 +405,21 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "1.0"
-  test_sequence: 2
+  version: "1.2"
+  test_sequence: 4
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Multi-step checkout order creation (Phase 2)"
+    - "User /me endpoints (profile, orders, change-password)"
+    - "Favorites toggle endpoint"
+    - "Addresses CRUD endpoints"
+    - "Password reset flow"
+    - "Email verification flow"
+    - "Order status update + tracking (Phase 4)"
+    - "Blog CMS endpoints (Phase 5)"
+    - "Sitemap.xml and robots.txt"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -263,3 +452,37 @@ agent_communication:
         Base URL: https://osman-craft-market.preview.emergentagent.com/api
         
         NO CRITICAL ISSUES FOUND. Backend is production-ready for Phase 1.
+    - agent: "testing"
+      message: |
+        ✅ PHASE 2, 4, 5 BACKEND TESTING COMPLETE - ALL 42 TESTS PASSED
+        
+        Comprehensive testing of all new endpoints completed successfully:
+        
+        AUTHENTICATION FLOW (Phase 2): ✅
+        - Password reset flow: forgot-password (anti-enumeration), reset-password with token validation
+        - Email verification: send-verification, verify-email with token
+        
+        ME ENDPOINTS (Phase 2): ✅
+        - Profile update (name, phone; email protected)
+        - Change password (validates old password, enforces min length)
+        - User orders (filtered by userId)
+        - Favorites toggle (add/remove with enriched product details)
+        - Addresses CRUD (isDefault flag management, userId filtering)
+        
+        ORDERS (Phase 2 + Phase 4): ✅
+        - Guest checkout (userId=null, statusHistory initialized)
+        - Authenticated checkout (userId populated)
+        - Admin order updates (status, tracking, statusHistory management)
+        
+        BLOG CMS (Phase 5): ✅
+        - Public endpoints (only published posts)
+        - Admin CRUD (full access, publishedAt management)
+        
+        SEO ROUTES (Phase 5): ✅
+        - /sitemap.xml (valid XML with all URLs)
+        - /robots.txt (proper Disallow rules)
+        
+        Test file: /app/backend_test.py
+        All edge cases verified: auth protection (401/403), anti-enumeration, toggle behavior, isDefault management, statusHistory growth prevention.
+        
+        NO CRITICAL ISSUES FOUND. All Phase 2, 4, 5 backend features are production-ready.

@@ -1,724 +1,756 @@
 #!/usr/bin/env python3
 """
-Backend API Test Suite for Ayıntap Balta Kılıç E-commerce
-Tests all backend endpoints using the deployed URL from .env
+Backend API Testing for Ayıntap Balta Kılıç E-commerce
+Tests Phase 2, 4, and 5 endpoints
 """
-
 import requests
 import json
-import base64
-from typing import Dict, Optional
+import time
+from pymongo import MongoClient
+import os
 
-# Base URL from .env
-BASE_URL = "https://osman-craft-market.preview.emergentagent.com/api"
-
-# Bootstrap admin credentials
+# Configuration
+BASE_URL = "https://osman-craft-market.preview.emergentagent.com"
+API_URL = f"{BASE_URL}/api"
 ADMIN_EMAIL = "admin@ayintap.com"
 ADMIN_PASSWORD = "Ayintap2025!"
 
-# Test state
-admin_token = None
-admin_cookie = None
-customer_token = None
-customer_cookie = None
-test_product_id = None
-test_section_id = None
-test_order_id = None
+# MongoDB connection for direct DB queries
+MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
+DB_NAME = os.getenv("DB_NAME", "ayintap_balta_kilic")
 
-def print_test(name: str):
-    """Print test name"""
-    print(f"\n{'='*80}")
-    print(f"TEST: {name}")
-    print('='*80)
+def get_db():
+    client = MongoClient(MONGO_URL)
+    return client[DB_NAME]
 
-def print_result(success: bool, message: str, details: Optional[Dict] = None):
-    """Print test result"""
-    status = "✅ PASS" if success else "❌ FAIL"
-    print(f"{status}: {message}")
+def print_test(name, passed, details=""):
+    status = "✅ PASS" if passed else "❌ FAIL"
+    print(f"{status}: {name}")
     if details:
-        print(f"Details: {json.dumps(details, indent=2, ensure_ascii=False)}")
+        print(f"   {details}")
 
-def test_auto_seed():
-    """Test 1: Auto-seed verification"""
-    print_test("1. Auto-seed verification")
-    
-    try:
-        # Test settings
-        print("\n→ Testing GET /api/settings")
-        resp = requests.get(f"{BASE_URL}/settings", timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            settings = data.get('settings', {})
-            brand_name = settings.get('brandName', '')
-            if brand_name == "Ayıntap Balta Kılıç":
-                print_result(True, f"Settings returned with brandName='{brand_name}'")
-            else:
-                print_result(False, f"Expected brandName='Ayıntap Balta Kılıç', got '{brand_name}'", data)
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Settings test failed: {str(e)}")
-    
-    try:
-        # Test categories
-        print("\n→ Testing GET /api/categories")
-        resp = requests.get(f"{BASE_URL}/categories", timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            categories = data.get('categories', [])
-            if len(categories) == 7:
-                print_result(True, f"Categories returned: {len(categories)} categories")
-                print(f"Category names: {[c.get('name') for c in categories]}")
-            else:
-                print_result(False, f"Expected 7 categories, got {len(categories)}", data)
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Categories test failed: {str(e)}")
-    
-    try:
-        # Test products
-        print("\n→ Testing GET /api/products")
-        resp = requests.get(f"{BASE_URL}/products", timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            products = data.get('products', [])
-            if len(products) == 6:
-                print_result(True, f"Products returned: {len(products)} products")
-                print(f"Product names: {[p.get('name') for p in products]}")
-            else:
-                print_result(False, f"Expected 6 products, got {len(products)}", data)
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Products test failed: {str(e)}")
-    
-    try:
-        # Test homepage sections with enriched products
-        print("\n→ Testing GET /api/homepage (must have enriched featured_products)")
-        resp = requests.get(f"{BASE_URL}/homepage", timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            sections = data.get('sections', [])
-            print(f"Total sections: {len(sections)}")
-            
-            # Check if sections are sorted by order
-            orders = [s.get('order', 0) for s in sections]
-            is_sorted = orders == sorted(orders)
-            
-            # Find featured_products section
-            featured_section = None
-            for s in sections:
-                if s.get('type') == 'featured_products':
-                    featured_section = s
-                    break
-            
-            if featured_section:
-                products_in_section = featured_section.get('data', {}).get('products', [])
-                if len(products_in_section) > 0:
-                    print_result(True, f"Homepage sections returned: {len(sections)} sections (sorted: {is_sorted}), featured_products section has {len(products_in_section)} enriched products")
-                else:
-                    print_result(False, "featured_products section exists but has no enriched products", featured_section)
-            else:
-                print_result(False, "No featured_products section found in homepage", {'sections': [s.get('type') for s in sections]})
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Homepage test failed: {str(e)}")
+def admin_login():
+    """Login as admin and return token"""
+    resp = requests.post(f"{API_URL}/auth/login", json={
+        "email": ADMIN_EMAIL,
+        "password": ADMIN_PASSWORD
+    })
+    if resp.status_code == 200:
+        data = resp.json()
+        return data.get("token"), resp.cookies.get("auth_token")
+    return None, None
 
-def test_auth_flow():
-    """Test 2: Auth flow"""
-    global admin_token, admin_cookie, customer_token, customer_cookie
-    print_test("2. Auth flow")
-    
-    try:
-        # Register new customer
-        print("\n→ Testing POST /api/auth/register")
-        customer_email = f"test_customer_{int(requests.get(f'{BASE_URL}/').json().get('time', '0').replace(':', '').replace('-', '').replace('.', '').replace('T', '').replace('Z', '')[:14])}@test.com"
-        register_data = {
-            "email": customer_email,
-            "password": "TestPass123!",
-            "name": "Test Customer",
-            "phone": "+90 555 123 4567"
-        }
-        resp = requests.post(f"{BASE_URL}/auth/register", json=register_data, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            user = data.get('user', {})
-            token = data.get('token', '')
-            cookie = resp.cookies.get('auth_token', '')
-            if user and token and cookie:
-                customer_token = token
-                customer_cookie = cookie
-                print_result(True, f"Customer registered: {user.get('email')}, role={user.get('role')}, token received, cookie set")
-            else:
-                print_result(False, "Registration response missing user/token/cookie", data)
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Register test failed: {str(e)}")
-    
-    try:
-        # Login with bad credentials
-        print("\n→ Testing POST /api/auth/login (bad credentials)")
-        resp = requests.post(f"{BASE_URL}/auth/login", json={"email": "bad@test.com", "password": "wrong"}, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code in [401, 404]:
-            print_result(True, f"Bad login rejected with status {resp.status_code}")
-        else:
-            print_result(False, f"Expected 401 or 404, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Bad login test failed: {str(e)}")
-    
-    try:
-        # Login with admin credentials
-        print("\n→ Testing POST /api/auth/login (admin credentials)")
-        resp = requests.post(f"{BASE_URL}/auth/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD}, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            user = data.get('user', {})
-            token = data.get('token', '')
-            cookie = resp.cookies.get('auth_token', '')
-            if user.get('role') == 'super_admin' and token and cookie:
-                admin_token = token
-                admin_cookie = cookie
-                print_result(True, f"Admin logged in: {user.get('email')}, role={user.get('role')}, token received, cookie set")
-            else:
-                print_result(False, "Admin login response invalid", data)
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Admin login test failed: {str(e)}")
-    
-    try:
-        # Test /auth/me with cookie
-        print("\n→ Testing GET /api/auth/me (with cookie)")
-        cookies = {'auth_token': admin_cookie} if admin_cookie else {}
-        resp = requests.get(f"{BASE_URL}/auth/me", cookies=cookies, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            user = data.get('user', {})
-            if user and user.get('email') == ADMIN_EMAIL:
-                print_result(True, f"/auth/me returned logged user: {user.get('email')}, role={user.get('role')}")
-            else:
-                print_result(False, "/auth/me returned wrong user", data)
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"/auth/me test failed: {str(e)}")
-    
-    try:
-        # Test /auth/me with Bearer token
-        print("\n→ Testing GET /api/auth/me (with Bearer token)")
-        headers = {'Authorization': f'Bearer {admin_token}'} if admin_token else {}
-        resp = requests.get(f"{BASE_URL}/auth/me", headers=headers, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            user = data.get('user', {})
-            if user and user.get('email') == ADMIN_EMAIL:
-                print_result(True, f"/auth/me with Bearer token returned logged user: {user.get('email')}")
-            else:
-                print_result(False, "/auth/me returned wrong user", data)
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"/auth/me Bearer test failed: {str(e)}")
-    
-    try:
-        # Test logout
-        print("\n→ Testing POST /api/auth/logout")
-        cookies = {'auth_token': admin_cookie} if admin_cookie else {}
-        resp = requests.post(f"{BASE_URL}/auth/logout", cookies=cookies, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            cookie_cleared = resp.cookies.get('auth_token', '') == ''
-            print_result(True, f"Logout successful, cookie cleared: {cookie_cleared}")
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Logout test failed: {str(e)}")
+def customer_register():
+    """Register a new customer and return token"""
+    email = f"test_{int(time.time())}@test.com"
+    resp = requests.post(f"{API_URL}/auth/register", json={
+        "email": email,
+        "password": "test123456",
+        "name": "Test Customer",
+        "phone": "+90 555 123 4567"
+    })
+    if resp.status_code == 200:
+        data = resp.json()
+        return data.get("token"), email, data.get("user", {}).get("id")
+    return None, None, None
 
-def test_admin_protection():
-    """Test 3: Admin protection"""
-    print_test("3. Admin protection")
-    
-    try:
-        # Without auth: PUT /api/settings
-        print("\n→ Testing PUT /api/settings (without auth)")
-        resp = requests.put(f"{BASE_URL}/settings", json={"tagline": "TEST"}, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 401:
-            print_result(True, "PUT /settings without auth rejected with 401")
-        else:
-            print_result(False, f"Expected 401, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Settings protection test failed: {str(e)}")
-    
-    try:
-        # Without auth: POST /api/admin/products
-        print("\n→ Testing POST /api/admin/products (without auth)")
-        resp = requests.post(f"{BASE_URL}/admin/products", json={"name": "Test"}, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 401:
-            print_result(True, "POST /admin/products without auth rejected with 401")
-        else:
-            print_result(False, f"Expected 401, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Products protection test failed: {str(e)}")
-    
-    try:
-        # Without auth: GET /api/admin/stats
-        print("\n→ Testing GET /api/admin/stats (without auth)")
-        resp = requests.get(f"{BASE_URL}/admin/stats", timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 401:
-            print_result(True, "GET /admin/stats without auth rejected with 401")
-        else:
-            print_result(False, f"Expected 401, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Stats protection test failed: {str(e)}")
-    
-    try:
-        # With customer role: GET /api/admin/stats
-        print("\n→ Testing GET /api/admin/stats (with customer role)")
-        headers = {'Authorization': f'Bearer {customer_token}'} if customer_token else {}
-        resp = requests.get(f"{BASE_URL}/admin/stats", headers=headers, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 403:
-            print_result(True, "GET /admin/stats with customer role rejected with 403 (forbidden)")
-        else:
-            print_result(False, f"Expected 403, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Customer stats test failed: {str(e)}")
-    
-    try:
-        # With super_admin: GET /api/admin/stats
-        print("\n→ Testing GET /api/admin/stats (with super_admin token)")
-        headers = {'Authorization': f'Bearer {admin_token}'} if admin_token else {}
-        resp = requests.get(f"{BASE_URL}/admin/stats", headers=headers, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            required_fields = ['orderCount', 'productCount', 'userCount', 'totalSales']
-            has_all = all(field in data for field in required_fields)
-            if has_all:
-                print_result(True, f"Admin stats returned: {data}")
-            else:
-                print_result(False, "Stats missing required fields", data)
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Admin stats test failed: {str(e)}")
+def get_product_id():
+    """Get a valid product ID for testing"""
+    resp = requests.get(f"{API_URL}/products")
+    if resp.status_code == 200:
+        products = resp.json().get("products", [])
+        if products:
+            return products[0]["id"]
+    return None
 
-def test_site_settings():
-    """Test 4: Site Settings"""
-    print_test("4. Site Settings")
-    
-    try:
-        # Update settings with admin token
-        print("\n→ Testing PUT /api/settings (with admin token)")
-        headers = {'Authorization': f'Bearer {admin_token}'} if admin_token else {}
-        resp = requests.put(f"{BASE_URL}/settings", json={"tagline": "TEST_TAGLINE"}, headers=headers, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            settings = data.get('settings', {})
-            if settings.get('tagline') == "TEST_TAGLINE":
-                print_result(True, f"Settings updated: tagline={settings.get('tagline')}")
-            else:
-                print_result(False, "Settings not updated correctly", data)
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Settings update test failed: {str(e)}")
-    
-    try:
-        # Verify settings reflect update
-        print("\n→ Testing GET /api/settings (verify update)")
-        resp = requests.get(f"{BASE_URL}/settings", timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            settings = data.get('settings', {})
-            if settings.get('tagline') == "TEST_TAGLINE":
-                print_result(True, f"Settings reflect update: tagline={settings.get('tagline')}")
-            else:
-                print_result(False, f"Expected tagline='TEST_TAGLINE', got '{settings.get('tagline')}'", data)
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Settings verification test failed: {str(e)}")
+print("\n" + "="*80)
+print("BACKEND API TESTING - PHASE 2, 4, 5")
+print("="*80 + "\n")
 
-def test_products_crud():
-    """Test 5: Products CRUD (admin)"""
-    global test_product_id
-    print_test("5. Products CRUD (admin)")
-    
-    try:
-        # GET /api/admin/products
-        print("\n→ Testing GET /api/admin/products (with admin token)")
-        headers = {'Authorization': f'Bearer {admin_token}'} if admin_token else {}
-        resp = requests.get(f"{BASE_URL}/admin/products", headers=headers, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            products = data.get('products', [])
-            print_result(True, f"Admin products list returned: {len(products)} products")
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Admin products list test failed: {str(e)}")
-    
-    try:
-        # POST /api/admin/products
-        print("\n→ Testing POST /api/admin/products (create product)")
-        headers = {'Authorization': f'Bearer {admin_token}'} if admin_token else {}
-        product_data = {
-            "name": "Test Kılıcı",
-            "slug": "test-kilici",
-            "price": 5000,
-            "stock": 10,
-            "description": "Test ürünü",
-            "isFeatured": True
-        }
-        resp = requests.post(f"{BASE_URL}/admin/products", json=product_data, headers=headers, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            product = data.get('product', {})
-            test_product_id = product.get('id')
-            if test_product_id and product.get('name') == "Test Kılıcı":
-                print_result(True, f"Product created: id={test_product_id}, name={product.get('name')}")
-            else:
-                print_result(False, "Product creation response invalid", data)
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Product creation test failed: {str(e)}")
-    
-    try:
-        # PUT /api/admin/products/<id>
-        print("\n→ Testing PUT /api/admin/products/<id> (update product)")
-        headers = {'Authorization': f'Bearer {admin_token}'} if admin_token else {}
-        resp = requests.put(f"{BASE_URL}/admin/products/{test_product_id}", json={"price": 6000}, headers=headers, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            product = data.get('product', {})
-            if product.get('price') == 6000:
-                print_result(True, f"Product updated: price={product.get('price')}")
-            else:
-                print_result(False, "Product not updated correctly", data)
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Product update test failed: {str(e)}")
-    
-    try:
-        # GET /api/products/<slug> public
-        print("\n→ Testing GET /api/products/<slug> (public)")
-        resp = requests.get(f"{BASE_URL}/products/test-kilici", timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            product = data.get('product', {})
-            if product.get('slug') == 'test-kilici':
-                print_result(True, f"Public product endpoint returned: {product.get('name')}")
-            else:
-                print_result(False, "Product not found or wrong slug", data)
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Public product test failed: {str(e)}")
-    
-    try:
-        # DELETE /api/admin/products/<id>
-        print("\n→ Testing DELETE /api/admin/products/<id>")
-        headers = {'Authorization': f'Bearer {admin_token}'} if admin_token else {}
-        resp = requests.delete(f"{BASE_URL}/admin/products/{test_product_id}", headers=headers, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            print_result(True, "Product deleted successfully")
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Product deletion test failed: {str(e)}")
+# ============================================================================
+# AUTHENTICATION FLOW (Phase 2)
+# ============================================================================
+print("\n--- AUTHENTICATION FLOW (Phase 2) ---\n")
 
-def test_homepage_sections():
-    """Test 6: Homepage section CRUD + reorder"""
-    global test_section_id
-    print_test("6. Homepage section CRUD + reorder")
-    
-    try:
-        # GET /api/admin/homepage
-        print("\n→ Testing GET /api/admin/homepage (with admin token)")
-        headers = {'Authorization': f'Bearer {admin_token}'} if admin_token else {}
-        resp = requests.get(f"{BASE_URL}/admin/homepage", headers=headers, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            sections = data.get('sections', [])
-            print_result(True, f"Admin homepage sections returned: {len(sections)} sections")
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Admin homepage list test failed: {str(e)}")
-    
-    try:
-        # POST /api/admin/homepage
-        print("\n→ Testing POST /api/admin/homepage (create section)")
-        headers = {'Authorization': f'Bearer {admin_token}'} if admin_token else {}
-        section_data = {
-            "type": "story",
-            "data": {
-                "title": "Test Story Section",
-                "content": "This is a test story"
-            }
-        }
-        resp = requests.post(f"{BASE_URL}/admin/homepage", json=section_data, headers=headers, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            section = data.get('section', {})
-            test_section_id = section.get('id')
-            if test_section_id and section.get('type') == 'story':
-                print_result(True, f"Section created: id={test_section_id}, type={section.get('type')}")
-            else:
-                print_result(False, "Section creation response invalid", data)
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Section creation test failed: {str(e)}")
-    
-    try:
-        # PUT /api/admin/homepage/<id>
-        print("\n→ Testing PUT /api/admin/homepage/<id> (toggle isActive)")
-        headers = {'Authorization': f'Bearer {admin_token}'} if admin_token else {}
-        resp = requests.put(f"{BASE_URL}/admin/homepage/{test_section_id}", json={"isActive": False}, headers=headers, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            section = data.get('section', {})
-            if section.get('isActive') == False:
-                print_result(True, f"Section updated: isActive={section.get('isActive')}")
-            else:
-                print_result(False, "Section not updated correctly", data)
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Section update test failed: {str(e)}")
-    
-    try:
-        # POST /api/admin/homepage/reorder
-        print("\n→ Testing POST /api/admin/homepage/reorder")
-        headers = {'Authorization': f'Bearer {admin_token}'} if admin_token else {}
-        # Get current sections to build reorder payload
-        resp_sections = requests.get(f"{BASE_URL}/admin/homepage", headers=headers, timeout=10)
-        if resp_sections.status_code == 200:
-            sections = resp_sections.json().get('sections', [])
-            reorder_data = {"order": [{"id": s.get('id'), "order": s.get('order')} for s in sections]}
-            resp = requests.post(f"{BASE_URL}/admin/homepage/reorder", json=reorder_data, headers=headers, timeout=10)
-            print(f"Status: {resp.status_code}")
-            if resp.status_code == 200:
-                print_result(True, "Section reorder successful")
-            else:
-                print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-        else:
-            print_result(False, "Could not get sections for reorder test")
-    except Exception as e:
-        print_result(False, f"Section reorder test failed: {str(e)}")
-    
-    try:
-        # GET /api/homepage public (verify disabled section not shown)
-        print("\n→ Testing GET /api/homepage (verify disabled section not shown)")
-        resp = requests.get(f"{BASE_URL}/homepage", timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            sections = data.get('sections', [])
-            section_ids = [s.get('id') for s in sections]
-            if test_section_id not in section_ids:
-                print_result(True, f"Public homepage does not show disabled section (total active: {len(sections)})")
-            else:
-                print_result(False, "Disabled section still appears in public homepage", {'section_ids': section_ids})
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Public homepage verification test failed: {str(e)}")
-    
-    try:
-        # DELETE /api/admin/homepage/<id>
-        print("\n→ Testing DELETE /api/admin/homepage/<id>")
-        headers = {'Authorization': f'Bearer {admin_token}'} if admin_token else {}
-        resp = requests.delete(f"{BASE_URL}/admin/homepage/{test_section_id}", headers=headers, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            print_result(True, "Section deleted successfully")
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Section deletion test failed: {str(e)}")
+# Test 1: POST /api/auth/forgot-password with existing email
+print("Test 1: Forgot password with existing email (anti-enumeration)")
+resp = requests.post(f"{API_URL}/auth/forgot-password", json={"email": ADMIN_EMAIL})
+test1_pass = resp.status_code == 200 and "message" in resp.json()
+print_test("POST /api/auth/forgot-password (existing email)", test1_pass, 
+           f"Status: {resp.status_code}, Response: {resp.json()}")
 
-def test_products_filter():
-    """Test 7: Products filter"""
-    print_test("7. Products filter")
-    
-    try:
-        # Filter by category
-        print("\n→ Testing GET /api/products?kategori=osmanli-serisi")
-        resp = requests.get(f"{BASE_URL}/products?kategori=osmanli-serisi", timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            products = data.get('products', [])
-            # Check if all products are from osmanli-serisi category
-            print_result(True, f"Category filter returned {len(products)} products")
-            if products:
-                print(f"Product names: {[p.get('name') for p in products]}")
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Category filter test failed: {str(e)}")
-    
-    try:
-        # Search by query
-        print("\n→ Testing GET /api/products?q=Alparslan")
-        resp = requests.get(f"{BASE_URL}/products?q=Alparslan", timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            products = data.get('products', [])
-            # Check if Alparslan product is in results
-            has_alparslan = any('Alparslan' in p.get('name', '') for p in products)
-            if has_alparslan:
-                print_result(True, f"Search query returned {len(products)} products including Alparslan")
-                print(f"Product names: {[p.get('name') for p in products]}")
-            else:
-                print_result(False, f"Search did not return Alparslan product", {'products': [p.get('name') for p in products]})
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Search query test failed: {str(e)}")
+# Verify resetToken is stored in DB
+db = get_db()
+admin_user = db.users.find_one({"email": ADMIN_EMAIL})
+reset_token = admin_user.get("resetToken") if admin_user else None
+test1b_pass = reset_token is not None
+print_test("Reset token stored in DB", test1b_pass, f"Token: {reset_token[:20] if reset_token else 'None'}...")
 
-def test_orders():
-    """Test 8: Orders"""
-    global test_order_id
-    print_test("8. Orders")
-    
-    try:
-        # POST /api/orders
-        print("\n→ Testing POST /api/orders (create order)")
-        order_data = {
-            "customer": {
-                "name": "Mehmet Yılmaz",
-                "email": "mehmet@test.com",
-                "phone": "+90 555 999 8877"
-            },
-            "items": [
-                {"productId": "test-id", "name": "Test Ürün", "price": 5000, "quantity": 2}
-            ],
-            "subtotal": 10000,
-            "shipping": 50,
-            "total": 10050,
-            "shippingAddress": {
-                "address": "Test Mahallesi Test Sokak No:1",
-                "city": "İstanbul",
-                "district": "Kadıköy",
-                "postalCode": "34000"
-            }
-        }
-        resp = requests.post(f"{BASE_URL}/orders", json=order_data, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            order = data.get('order', {})
-            test_order_id = order.get('id')
-            order_number = order.get('orderNumber', '')
-            if test_order_id and order_number.startswith('ABK-'):
-                print_result(True, f"Order created: id={test_order_id}, orderNumber={order_number}")
-            else:
-                print_result(False, "Order creation response invalid or orderNumber doesn't start with 'ABK-'", data)
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Order creation test failed: {str(e)}")
-    
-    try:
-        # GET /api/admin/orders
-        print("\n→ Testing GET /api/admin/orders (verify order in list)")
-        headers = {'Authorization': f'Bearer {admin_token}'} if admin_token else {}
-        resp = requests.get(f"{BASE_URL}/admin/orders", headers=headers, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            orders = data.get('orders', [])
-            order_ids = [o.get('id') for o in orders]
-            if test_order_id in order_ids:
-                print_result(True, f"Admin orders list includes new order (total: {len(orders)} orders)")
-            else:
-                print_result(False, "New order not found in admin orders list", {'order_ids': order_ids})
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Admin orders list test failed: {str(e)}")
+# Test 2: POST /api/auth/forgot-password with non-existent email
+print("\nTest 2: Forgot password with non-existent email (anti-enumeration)")
+resp = requests.post(f"{API_URL}/auth/forgot-password", json={"email": "nonexistent@test.com"})
+test2_pass = resp.status_code == 200
+print_test("POST /api/auth/forgot-password (non-existent email)", test2_pass, 
+           f"Status: {resp.status_code}, Should still return 200")
 
-def test_upload():
-    """Test 9: Upload (with fallback)"""
-    print_test("9. Upload (with fallback)")
-    
-    try:
-        # POST /api/upload with small base64 image
-        print("\n→ Testing POST /api/upload (with admin token, fallback mode)")
-        headers = {'Authorization': f'Bearer {admin_token}'} if admin_token else {}
-        # Small 1x1 red pixel PNG
-        small_png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg=="
-        data_url = f"data:image/png;base64,{small_png}"
-        upload_data = {"dataUrl": data_url}
-        resp = requests.post(f"{BASE_URL}/upload", json=upload_data, headers=headers, timeout=10)
-        print(f"Status: {resp.status_code}")
-        if resp.status_code == 200:
-            data = resp.json()
-            url = data.get('url', '')
-            fallback = data.get('fallback', False)
-            if url and fallback == True:
-                print_result(True, f"Upload returned with fallback=true (Cloudinary keys empty), url returned: {url[:50]}...")
-            else:
-                print_result(False, "Upload response invalid or fallback not true", data)
-        else:
-            print_result(False, f"Expected 200, got {resp.status_code}", resp.json())
-    except Exception as e:
-        print_result(False, f"Upload test failed: {str(e)}")
+# Test 3: POST /api/auth/reset-password with invalid token
+print("\nTest 3: Reset password with invalid token")
+resp = requests.post(f"{API_URL}/auth/reset-password", json={
+    "token": "invalid-token-12345",
+    "password": "newpass123"
+})
+test3_pass = resp.status_code == 400 and "token" in resp.json().get("error", "").lower()
+print_test("POST /api/auth/reset-password (invalid token)", test3_pass, 
+           f"Status: {resp.status_code}, Error: {resp.json().get('error', '')}")
 
-def run_all_tests():
-    """Run all test scenarios"""
-    print("\n" + "="*80)
-    print("AYINTAP BALTA KILIÇ BACKEND API TEST SUITE")
-    print("="*80)
-    print(f"Base URL: {BASE_URL}")
-    print(f"Admin: {ADMIN_EMAIL}")
-    print("="*80)
+# Test 4: POST /api/auth/reset-password with valid token
+print("\nTest 4: Reset password with valid token")
+if reset_token:
+    resp = requests.post(f"{API_URL}/auth/reset-password", json={
+        "token": reset_token,
+        "password": "Ayintap2025!"  # Reset to same password
+    })
+    test4_pass = resp.status_code == 200
+    print_test("POST /api/auth/reset-password (valid token)", test4_pass, 
+               f"Status: {resp.status_code}, Response: {resp.json()}")
     
-    test_auto_seed()
-    test_auth_flow()
-    test_admin_protection()
-    test_site_settings()
-    test_products_crud()
-    test_homepage_sections()
-    test_products_filter()
-    test_orders()
-    test_upload()
-    
-    print("\n" + "="*80)
-    print("ALL TESTS COMPLETED")
-    print("="*80)
+    # Verify token is cleared
+    admin_user_after = db.users.find_one({"email": ADMIN_EMAIL})
+    test4b_pass = admin_user_after.get("resetToken") is None
+    print_test("Reset token cleared after use", test4b_pass)
+else:
+    print_test("POST /api/auth/reset-password (valid token)", False, "No reset token available")
 
-if __name__ == "__main__":
-    run_all_tests()
+# Test 5: POST /api/auth/reset-password with short password
+print("\nTest 5: Reset password with too short password")
+resp = requests.post(f"{API_URL}/auth/reset-password", json={
+    "token": "any-token",
+    "password": "123"
+})
+test5_pass = resp.status_code == 400
+print_test("POST /api/auth/reset-password (short password)", test5_pass, 
+           f"Status: {resp.status_code}, Error: {resp.json().get('error', '')}")
+
+# Test 6: POST /api/auth/send-verification without auth
+print("\nTest 6: Send verification without auth")
+resp = requests.post(f"{API_URL}/auth/send-verification")
+test6_pass = resp.status_code == 401
+print_test("POST /api/auth/send-verification (no auth)", test6_pass, 
+           f"Status: {resp.status_code}")
+
+# Test 7: POST /api/auth/send-verification with auth
+print("\nTest 7: Send verification with auth")
+admin_token, _ = admin_login()
+resp = requests.post(f"{API_URL}/auth/send-verification", 
+                     headers={"Authorization": f"Bearer {admin_token}"})
+test7_pass = resp.status_code == 200
+print_test("POST /api/auth/send-verification (with auth)", test7_pass, 
+           f"Status: {resp.status_code}")
+
+# Verify verifyToken is stored
+admin_user = db.users.find_one({"email": ADMIN_EMAIL})
+verify_token = admin_user.get("verifyToken") if admin_user else None
+test7b_pass = verify_token is not None
+print_test("Verify token stored in DB", test7b_pass)
+
+# Test 8: POST /api/auth/verify-email with invalid token
+print("\nTest 8: Verify email with invalid token")
+resp = requests.post(f"{API_URL}/auth/verify-email", json={"token": "invalid-token"})
+test8_pass = resp.status_code == 400
+print_test("POST /api/auth/verify-email (invalid token)", test8_pass, 
+           f"Status: {resp.status_code}")
+
+# Test 9: POST /api/auth/verify-email with valid token
+print("\nTest 9: Verify email with valid token")
+if verify_token:
+    resp = requests.post(f"{API_URL}/auth/verify-email", json={"token": verify_token})
+    test9_pass = resp.status_code == 200
+    print_test("POST /api/auth/verify-email (valid token)", test9_pass, 
+               f"Status: {resp.status_code}")
+    
+    # Verify emailVerified is set
+    admin_user_after = db.users.find_one({"email": ADMIN_EMAIL})
+    test9b_pass = admin_user_after.get("emailVerified") == True
+    print_test("emailVerified set to true", test9b_pass)
+else:
+    print_test("POST /api/auth/verify-email (valid token)", False, "No verify token available")
+
+# ============================================================================
+# ME ENDPOINTS (Phase 2)
+# ============================================================================
+print("\n--- ME ENDPOINTS (Phase 2) ---\n")
+
+# Register a customer for testing
+customer_token, customer_email, customer_id = customer_register()
+print(f"Registered test customer: {customer_email}")
+
+# Test 10: All ME endpoints without auth should return 401
+print("\nTest 10: ME endpoints without auth")
+endpoints = [
+    ("GET", "/me/orders"),
+    ("PUT", "/me/profile"),
+    ("POST", "/me/change-password"),
+    ("GET", "/me/favorites"),
+    ("POST", "/me/favorites"),
+    ("GET", "/me/addresses"),
+    ("POST", "/me/addresses"),
+]
+test10_pass = True
+for method, endpoint in endpoints:
+    if method == "GET":
+        resp = requests.get(f"{API_URL}{endpoint}")
+    elif method == "POST":
+        resp = requests.post(f"{API_URL}{endpoint}", json={})
+    elif method == "PUT":
+        resp = requests.put(f"{API_URL}{endpoint}", json={})
+    
+    if resp.status_code != 401:
+        test10_pass = False
+        print(f"   ❌ {method} {endpoint} returned {resp.status_code} instead of 401")
+    else:
+        print(f"   ✅ {method} {endpoint} correctly returned 401")
+
+print_test("All ME endpoints require auth", test10_pass)
+
+# Test 11: PUT /api/me/profile
+print("\nTest 11: Update profile")
+resp = requests.put(f"{API_URL}/me/profile", 
+                    headers={"Authorization": f"Bearer {customer_token}"},
+                    json={"name": "Updated Name", "phone": "+90 555 999 8888"})
+test11_pass = resp.status_code == 200
+if test11_pass:
+    user = resp.json().get("user", {})
+    test11_pass = user.get("name") == "Updated Name" and user.get("phone") == "+90 555 999 8888"
+    # Verify email NOT changed
+    test11b_pass = user.get("email") == customer_email
+    print_test("PUT /api/me/profile", test11_pass, f"Name and phone updated")
+    print_test("Email field NOT changed", test11b_pass)
+else:
+    print_test("PUT /api/me/profile", False, f"Status: {resp.status_code}")
+
+# Test 12: POST /api/me/change-password with wrong oldPassword
+print("\nTest 12: Change password with wrong old password")
+resp = requests.post(f"{API_URL}/me/change-password",
+                     headers={"Authorization": f"Bearer {customer_token}"},
+                     json={"oldPassword": "wrongpass", "newPassword": "newpass123"})
+test12_pass = resp.status_code == 401 and "hatali" in resp.json().get("error", "").lower()
+print_test("POST /api/me/change-password (wrong old password)", test12_pass, 
+           f"Status: {resp.status_code}, Error: {resp.json().get('error', '')}")
+
+# Test 13: POST /api/me/change-password with short newPassword
+print("\nTest 13: Change password with short new password")
+resp = requests.post(f"{API_URL}/me/change-password",
+                     headers={"Authorization": f"Bearer {customer_token}"},
+                     json={"oldPassword": "test123456", "newPassword": "123"})
+test13_pass = resp.status_code == 400
+print_test("POST /api/me/change-password (short password)", test13_pass, 
+           f"Status: {resp.status_code}")
+
+# Test 14: POST /api/me/change-password with correct oldPassword
+print("\nTest 14: Change password with correct old password")
+resp = requests.post(f"{API_URL}/me/change-password",
+                     headers={"Authorization": f"Bearer {customer_token}"},
+                     json={"oldPassword": "test123456", "newPassword": "newpass123456"})
+test14_pass = resp.status_code == 200
+print_test("POST /api/me/change-password (correct)", test14_pass, 
+           f"Status: {resp.status_code}")
+
+# Verify login works with new password
+if test14_pass:
+    resp = requests.post(f"{API_URL}/auth/login", json={
+        "email": customer_email,
+        "password": "newpass123456"
+    })
+    test14b_pass = resp.status_code == 200
+    print_test("Login with new password works", test14b_pass)
+    if test14b_pass:
+        customer_token = resp.json().get("token")  # Update token
+
+# Test 15: GET /api/me/orders
+print("\nTest 15: Get user orders")
+resp = requests.get(f"{API_URL}/me/orders",
+                    headers={"Authorization": f"Bearer {customer_token}"})
+test15_pass = resp.status_code == 200 and "orders" in resp.json()
+print_test("GET /api/me/orders", test15_pass, 
+           f"Status: {resp.status_code}, Orders: {len(resp.json().get('orders', []))}")
+
+# ============================================================================
+# FAVORITES (Phase 2)
+# ============================================================================
+print("\n--- FAVORITES (Phase 2) ---\n")
+
+product_id = get_product_id()
+print(f"Using product ID: {product_id}")
+
+# Test 16: GET /api/me/favorites with no favorites
+print("\nTest 16: Get favorites (empty)")
+resp = requests.get(f"{API_URL}/me/favorites",
+                    headers={"Authorization": f"Bearer {customer_token}"})
+test16_pass = resp.status_code == 200 and resp.json().get("favorites") == []
+print_test("GET /api/me/favorites (empty)", test16_pass, 
+           f"Status: {resp.status_code}, Favorites: {resp.json().get('favorites', [])}")
+
+# Test 17: POST /api/me/favorites to add
+print("\nTest 17: Add favorite")
+resp = requests.post(f"{API_URL}/me/favorites",
+                     headers={"Authorization": f"Bearer {customer_token}"},
+                     json={"productId": product_id})
+test17_pass = resp.status_code == 200 and resp.json().get("added") == True
+print_test("POST /api/me/favorites (add)", test17_pass, 
+           f"Status: {resp.status_code}, Added: {resp.json().get('added')}")
+
+# Test 18: POST /api/me/favorites again to toggle off
+print("\nTest 18: Toggle favorite off")
+resp = requests.post(f"{API_URL}/me/favorites",
+                     headers={"Authorization": f"Bearer {customer_token}"},
+                     json={"productId": product_id})
+test18_pass = resp.status_code == 200 and resp.json().get("added") == False
+print_test("POST /api/me/favorites (toggle off)", test18_pass, 
+           f"Status: {resp.status_code}, Added: {resp.json().get('added')}")
+
+# Test 19: GET /api/me/favorites after adding
+print("\nTest 19: Get favorites with enriched product")
+# Add it back
+requests.post(f"{API_URL}/me/favorites",
+              headers={"Authorization": f"Bearer {customer_token}"},
+              json={"productId": product_id})
+resp = requests.get(f"{API_URL}/me/favorites",
+                    headers={"Authorization": f"Bearer {customer_token}"})
+test19_pass = resp.status_code == 200 and len(resp.json().get("favorites", [])) > 0
+if test19_pass:
+    fav = resp.json()["favorites"][0]
+    test19_pass = "name" in fav and "price" in fav and "images" in fav
+print_test("GET /api/me/favorites (enriched)", test19_pass, 
+           f"Status: {resp.status_code}, Has product details: {test19_pass}")
+
+# ============================================================================
+# ADDRESSES (Phase 2)
+# ============================================================================
+print("\n--- ADDRESSES (Phase 2) ---\n")
+
+# Test 20: GET /api/me/addresses with no addresses
+print("\nTest 20: Get addresses (empty)")
+resp = requests.get(f"{API_URL}/me/addresses",
+                    headers={"Authorization": f"Bearer {customer_token}"})
+test20_pass = resp.status_code == 200 and resp.json().get("addresses") == []
+print_test("GET /api/me/addresses (empty)", test20_pass, 
+           f"Status: {resp.status_code}")
+
+# Test 21: POST /api/me/addresses
+print("\nTest 21: Create address")
+resp = requests.post(f"{API_URL}/me/addresses",
+                     headers={"Authorization": f"Bearer {customer_token}"},
+                     json={
+                         "title": "Ev",
+                         "fullName": "Ali Yilmaz",
+                         "phone": "0555 123 4567",
+                         "city": "Istanbul",
+                         "district": "Kadikoy",
+                         "addressLine": "Test Sokak No:1",
+                         "isDefault": True
+                     })
+test21_pass = resp.status_code == 200
+address1_id = resp.json().get("address", {}).get("id") if test21_pass else None
+print_test("POST /api/me/addresses", test21_pass, 
+           f"Status: {resp.status_code}, ID: {address1_id}")
+
+# Test 22: POST second address with isDefault=true
+print("\nTest 22: Create second address with isDefault=true")
+resp = requests.post(f"{API_URL}/me/addresses",
+                     headers={"Authorization": f"Bearer {customer_token}"},
+                     json={
+                         "title": "Is",
+                         "fullName": "Ali Yilmaz",
+                         "phone": "0555 999 8888",
+                         "city": "Ankara",
+                         "district": "Cankaya",
+                         "addressLine": "Is Sokak No:2",
+                         "isDefault": True
+                     })
+test22_pass = resp.status_code == 200
+address2_id = resp.json().get("address", {}).get("id") if test22_pass else None
+print_test("POST /api/me/addresses (second)", test22_pass, 
+           f"Status: {resp.status_code}")
+
+# Verify first address now has isDefault=false
+resp = requests.get(f"{API_URL}/me/addresses",
+                    headers={"Authorization": f"Bearer {customer_token}"})
+if resp.status_code == 200:
+    addresses = resp.json().get("addresses", [])
+    addr1 = next((a for a in addresses if a["id"] == address1_id), None)
+    test22b_pass = addr1 and addr1.get("isDefault") == False
+    print_test("Previous address isDefault set to false", test22b_pass)
+
+# Test 23: PUT /api/me/addresses/:id
+print("\nTest 23: Update address")
+if address1_id:
+    resp = requests.put(f"{API_URL}/me/addresses/{address1_id}",
+                        headers={"Authorization": f"Bearer {customer_token}"},
+                        json={"title": "Ev (Guncellendi)"})
+    test23_pass = resp.status_code == 200
+    if test23_pass:
+        addr = resp.json().get("address", {})
+        test23_pass = addr.get("title") == "Ev (Guncellendi)" and addr.get("city") == "Istanbul"
+    print_test("PUT /api/me/addresses/:id", test23_pass, 
+               f"Status: {resp.status_code}, Title updated, other fields preserved")
+else:
+    print_test("PUT /api/me/addresses/:id", False, "No address ID available")
+
+# Test 24: DELETE /api/me/addresses/:id
+print("\nTest 24: Delete address")
+if address2_id:
+    resp = requests.delete(f"{API_URL}/me/addresses/{address2_id}",
+                          headers={"Authorization": f"Bearer {customer_token}"})
+    test24_pass = resp.status_code == 200
+    print_test("DELETE /api/me/addresses/:id", test24_pass, 
+               f"Status: {resp.status_code}")
+    
+    # Verify it's gone
+    resp = requests.get(f"{API_URL}/me/addresses",
+                        headers={"Authorization": f"Bearer {customer_token}"})
+    if resp.status_code == 200:
+        addresses = resp.json().get("addresses", [])
+        test24b_pass = not any(a["id"] == address2_id for a in addresses)
+        print_test("Address removed from list", test24b_pass)
+else:
+    print_test("DELETE /api/me/addresses/:id", False, "No address ID available")
+
+# Test 25: DELETE address belonging to another user (should not delete)
+print("\nTest 25: Delete address belonging to another user")
+# Create address as admin
+admin_token, _ = admin_login()
+resp = requests.post(f"{API_URL}/me/addresses",
+                     headers={"Authorization": f"Bearer {admin_token}"},
+                     json={
+                         "title": "Admin Address",
+                         "fullName": "Admin",
+                         "phone": "0555",
+                         "city": "Istanbul",
+                         "district": "Test",
+                         "addressLine": "Test",
+                         "isDefault": True
+                     })
+admin_address_id = resp.json().get("address", {}).get("id") if resp.status_code == 200 else None
+
+# Try to delete as customer
+if admin_address_id:
+    resp = requests.delete(f"{API_URL}/me/addresses/{admin_address_id}",
+                          headers={"Authorization": f"Bearer {customer_token}"})
+    # Should return 200 but not actually delete (filtered by userId)
+    test25_pass = resp.status_code == 200
+    
+    # Verify admin address still exists
+    resp = requests.get(f"{API_URL}/me/addresses",
+                        headers={"Authorization": f"Bearer {admin_token}"})
+    if resp.status_code == 200:
+        addresses = resp.json().get("addresses", [])
+        test25b_pass = any(a["id"] == admin_address_id for a in addresses)
+        print_test("DELETE address of another user (filtered by userId)", test25b_pass, 
+                   "Address not deleted due to userId filter")
+else:
+    print_test("DELETE address of another user", False, "Could not create admin address")
+
+# ============================================================================
+# ORDERS (Phase 2 + Phase 4)
+# ============================================================================
+print("\n--- ORDERS (Phase 2 + Phase 4) ---\n")
+
+# Test 26: POST /api/orders as guest
+print("\nTest 26: Create order as guest")
+resp = requests.post(f"{API_URL}/orders", json={
+    "customer": {"name": "Guest User", "email": "guest@test.com", "phone": "0555 123 4567"},
+    "items": [{"id": product_id, "name": "Test Product", "price": 1000, "qty": 1}],
+    "subtotal": 1000,
+    "shipping": 89,
+    "extraFee": 0,
+    "total": 1089,
+    "shippingMethod": "standard",
+    "shippingAddress": {
+        "fullName": "Guest User",
+        "city": "Istanbul",
+        "district": "Kadikoy",
+        "addressLine": "Test Sokak No:1"
+    },
+    "paymentMethod": "iyzico"
+})
+test26_pass = resp.status_code == 200
+guest_order_id = None
+if test26_pass:
+    order = resp.json().get("order", {})
+    test26_pass = (order.get("userId") is None and 
+                   order.get("status") == "pending_payment" and
+                   len(order.get("statusHistory", [])) == 1 and
+                   order.get("shippingMethod") == "standard")
+    guest_order_id = order.get("id")
+    guest_order_number = order.get("orderNumber")
+print_test("POST /api/orders (guest)", test26_pass, 
+           f"Status: {resp.status_code}, userId=null, status=pending_payment, statusHistory has 1 entry")
+
+# Test 27: POST /api/orders as authenticated user
+print("\nTest 27: Create order as authenticated user")
+resp = requests.post(f"{API_URL}/orders",
+                     headers={"Authorization": f"Bearer {customer_token}"},
+                     json={
+                         "customer": {"name": "Customer", "email": customer_email, "phone": "0555"},
+                         "items": [{"id": product_id, "name": "Test", "price": 500, "qty": 2}],
+                         "subtotal": 1000,
+                         "shipping": 89,
+                         "extraFee": 50,
+                         "total": 1139,
+                         "shippingMethod": "express",
+                         "shippingAddress": {"fullName": "Customer", "city": "X", "district": "Y", "addressLine": "Z"},
+                         "paymentMethod": "iyzico"
+                     })
+test27_pass = resp.status_code == 200
+auth_order_id = None
+if test27_pass:
+    order = resp.json().get("order", {})
+    test27_pass = order.get("userId") == customer_id
+    auth_order_id = order.get("id")
+print_test("POST /api/orders (authenticated)", test27_pass, 
+           f"Status: {resp.status_code}, userId populated with customer ID")
+
+# Test 28: GET /api/orders/:orderNumber (public)
+print("\nTest 28: Get order by orderNumber (public)")
+if guest_order_number:
+    resp = requests.get(f"{API_URL}/orders/{guest_order_number}")
+    test28_pass = resp.status_code == 200 and resp.json().get("order", {}).get("orderNumber") == guest_order_number
+    print_test("GET /api/orders/:orderNumber", test28_pass, 
+               f"Status: {resp.status_code}")
+else:
+    print_test("GET /api/orders/:orderNumber", False, "No order number available")
+
+# ============================================================================
+# ADMIN ORDERS (Phase 4)
+# ============================================================================
+print("\n--- ADMIN ORDERS (Phase 4) ---\n")
+
+# Test 29: PUT /api/admin/orders/:id without auth
+print("\nTest 29: Update order without auth")
+if guest_order_id:
+    resp = requests.put(f"{API_URL}/admin/orders/{guest_order_id}", json={"status": "shipped"})
+    test29_pass = resp.status_code == 401
+    print_test("PUT /api/admin/orders/:id (no auth)", test29_pass, 
+               f"Status: {resp.status_code}")
+else:
+    print_test("PUT /api/admin/orders/:id (no auth)", False, "No order ID available")
+
+# Test 30: PUT /api/admin/orders/:id as customer
+print("\nTest 30: Update order as customer")
+if guest_order_id:
+    resp = requests.put(f"{API_URL}/admin/orders/{guest_order_id}",
+                        headers={"Authorization": f"Bearer {customer_token}"},
+                        json={"status": "shipped"})
+    test30_pass = resp.status_code == 403
+    print_test("PUT /api/admin/orders/:id (customer)", test30_pass, 
+               f"Status: {resp.status_code}")
+else:
+    print_test("PUT /api/admin/orders/:id (customer)", False, "No order ID available")
+
+# Test 31: PUT /api/admin/orders/:id as admin
+print("\nTest 31: Update order as admin")
+admin_token, _ = admin_login()
+if guest_order_id:
+    resp = requests.put(f"{API_URL}/admin/orders/{guest_order_id}",
+                        headers={"Authorization": f"Bearer {admin_token}"},
+                        json={
+                            "status": "shipped",
+                            "trackingCode": "ABC123",
+                            "trackingCarrier": "Yurtici Kargo",
+                            "note": "Paketlendi ve kargoya verildi"
+                        })
+    test31_pass = resp.status_code == 200
+    if test31_pass:
+        order = resp.json().get("order", {})
+        test31_pass = (order.get("status") == "shipped" and
+                       order.get("trackingCode") == "ABC123" and
+                       order.get("trackingCarrier") == "Yurtici Kargo" and
+                       len(order.get("statusHistory", [])) == 2)
+    print_test("PUT /api/admin/orders/:id (admin)", test31_pass, 
+               f"Status: {resp.status_code}, statusHistory now has 2 entries, tracking fields updated")
+else:
+    print_test("PUT /api/admin/orders/:id (admin)", False, "No order ID available")
+
+# Test 32: PUT /api/admin/orders/:id with same status (no change)
+print("\nTest 32: Update order with same status (statusHistory should not grow)")
+if guest_order_id:
+    resp = requests.put(f"{API_URL}/admin/orders/{guest_order_id}",
+                        headers={"Authorization": f"Bearer {admin_token}"},
+                        json={"trackingCode": "XYZ789"})
+    test32_pass = resp.status_code == 200
+    if test32_pass:
+        order = resp.json().get("order", {})
+        test32_pass = len(order.get("statusHistory", [])) == 2  # Should still be 2
+    print_test("PUT /api/admin/orders/:id (same status)", test32_pass, 
+               f"Status: {resp.status_code}, statusHistory did not grow")
+else:
+    print_test("PUT /api/admin/orders/:id (same status)", False, "No order ID available")
+
+# ============================================================================
+# BLOG (Phase 5)
+# ============================================================================
+print("\n--- BLOG (Phase 5) ---\n")
+
+# Test 33: GET /api/blog (public)
+print("\nTest 33: Get published blog posts")
+resp = requests.get(f"{API_URL}/blog")
+test33_pass = resp.status_code == 200 and "posts" in resp.json()
+if test33_pass:
+    posts = resp.json().get("posts", [])
+    # All should be published
+    test33_pass = all(p.get("isPublished") == True for p in posts)
+print_test("GET /api/blog (public)", test33_pass, 
+           f"Status: {resp.status_code}, All posts are published: {test33_pass}")
+
+# Test 34: POST /api/admin/blog as admin
+print("\nTest 34: Create blog post as admin")
+resp = requests.post(f"{API_URL}/admin/blog",
+                     headers={"Authorization": f"Bearer {admin_token}"},
+                     json={
+                         "title": "Test Blog Post",
+                         "slug": "test-blog-post",
+                         "content": "This is a test blog post content.",
+                         "excerpt": "Test excerpt",
+                         "isPublished": True,
+                         "category": "Test"
+                     })
+test34_pass = resp.status_code == 200
+blog_id = None
+blog_slug = None
+if test34_pass:
+    post = resp.json().get("post", {})
+    test34_pass = post.get("publishedAt") is not None  # Should be set
+    blog_id = post.get("id")
+    blog_slug = post.get("slug")
+print_test("POST /api/admin/blog (admin)", test34_pass, 
+           f"Status: {resp.status_code}, publishedAt set: {test34_pass}")
+
+# Test 35: GET /api/blog/:slug (public)
+print("\nTest 35: Get blog post by slug")
+if blog_slug:
+    resp = requests.get(f"{API_URL}/blog/{blog_slug}")
+    test35_pass = resp.status_code == 200 and resp.json().get("post", {}).get("slug") == blog_slug
+    print_test("GET /api/blog/:slug", test35_pass, 
+               f"Status: {resp.status_code}")
+else:
+    print_test("GET /api/blog/:slug", False, "No blog slug available")
+
+# Test 36: POST /api/admin/blog without auth
+print("\nTest 36: Create blog post without auth")
+resp = requests.post(f"{API_URL}/admin/blog", json={"title": "Test"})
+test36_pass = resp.status_code == 401
+print_test("POST /api/admin/blog (no auth)", test36_pass, 
+           f"Status: {resp.status_code}")
+
+# Test 37: POST /api/admin/blog as customer
+print("\nTest 37: Create blog post as customer")
+resp = requests.post(f"{API_URL}/admin/blog",
+                     headers={"Authorization": f"Bearer {customer_token}"},
+                     json={"title": "Test"})
+test37_pass = resp.status_code == 403
+print_test("POST /api/admin/blog (customer)", test37_pass, 
+           f"Status: {resp.status_code}")
+
+# Test 38: PUT /api/admin/blog/:id toggling isPublished false->true
+print("\nTest 38: Toggle blog post isPublished false->true")
+# First create unpublished post
+resp = requests.post(f"{API_URL}/admin/blog",
+                     headers={"Authorization": f"Bearer {admin_token}"},
+                     json={
+                         "title": "Unpublished Post",
+                         "slug": "unpublished-post",
+                         "content": "Content",
+                         "isPublished": False
+                     })
+unpublished_id = resp.json().get("post", {}).get("id") if resp.status_code == 200 else None
+
+if unpublished_id:
+    # Verify publishedAt is null
+    resp = requests.get(f"{API_URL}/admin/blog",
+                        headers={"Authorization": f"Bearer {admin_token}"})
+    posts = resp.json().get("posts", [])
+    unpub_post = next((p for p in posts if p["id"] == unpublished_id), None)
+    test38a_pass = unpub_post and unpub_post.get("publishedAt") is None
+    print(f"   Unpublished post has publishedAt=null: {test38a_pass}")
+    
+    # Now toggle to published
+    resp = requests.put(f"{API_URL}/admin/blog/{unpublished_id}",
+                        headers={"Authorization": f"Bearer {admin_token}"},
+                        json={"isPublished": True})
+    test38_pass = resp.status_code == 200
+    if test38_pass:
+        post = resp.json().get("post", {})
+        test38_pass = post.get("publishedAt") is not None
+    print_test("PUT /api/admin/blog/:id (toggle published)", test38_pass, 
+               f"Status: {resp.status_code}, publishedAt now set: {test38_pass}")
+else:
+    print_test("PUT /api/admin/blog/:id (toggle published)", False, "Could not create unpublished post")
+
+# Test 39: PUT /api/admin/blog/:id updating title
+print("\nTest 39: Update blog post title")
+if blog_id:
+    resp = requests.put(f"{API_URL}/admin/blog/{blog_id}",
+                        headers={"Authorization": f"Bearer {admin_token}"},
+                        json={"title": "Updated Test Blog Post"})
+    test39_pass = resp.status_code == 200
+    if test39_pass:
+        post = resp.json().get("post", {})
+        test39_pass = post.get("title") == "Updated Test Blog Post"
+    print_test("PUT /api/admin/blog/:id (update title)", test39_pass, 
+               f"Status: {resp.status_code}")
+else:
+    print_test("PUT /api/admin/blog/:id (update title)", False, "No blog ID available")
+
+# Test 40: DELETE /api/admin/blog/:id
+print("\nTest 40: Delete blog post")
+if blog_id:
+    resp = requests.delete(f"{API_URL}/admin/blog/{blog_id}",
+                          headers={"Authorization": f"Bearer {admin_token}"})
+    test40_pass = resp.status_code == 200
+    print_test("DELETE /api/admin/blog/:id", test40_pass, 
+               f"Status: {resp.status_code}")
+    
+    # Verify it's gone
+    if blog_slug:
+        resp = requests.get(f"{API_URL}/blog/{blog_slug}")
+        test40b_pass = resp.status_code == 404
+        print_test("Blog post removed (404 on GET)", test40b_pass)
+else:
+    print_test("DELETE /api/admin/blog/:id", False, "No blog ID available")
+
+# ============================================================================
+# SEO ROUTES (Phase 5)
+# ============================================================================
+print("\n--- SEO ROUTES (Phase 5) ---\n")
+
+# Test 41: GET /sitemap.xml
+print("\nTest 41: Get sitemap.xml")
+resp = requests.get(f"{BASE_URL}/sitemap.xml")
+test41_pass = resp.status_code == 200
+if test41_pass:
+    content_type = resp.headers.get("Content-Type", "")
+    body = resp.text
+    test41_pass = ("xml" in content_type.lower() and
+                   "<?xml" in body and
+                   "<urlset" in body and
+                   "<url>" in body and
+                   "<loc>" in body)
+print_test("GET /sitemap.xml", test41_pass, 
+           f"Status: {resp.status_code}, Content-Type: {resp.headers.get('Content-Type')}, Has XML structure: {test41_pass}")
+
+# Test 42: GET /robots.txt
+print("\nTest 42: Get robots.txt")
+resp = requests.get(f"{BASE_URL}/robots.txt")
+test42_pass = resp.status_code == 200
+if test42_pass:
+    content_type = resp.headers.get("Content-Type", "")
+    body = resp.text
+    test42_pass = ("text/plain" in content_type.lower() and
+                   "Disallow: /admin" in body and
+                   "Sitemap:" in body)
+print_test("GET /robots.txt", test42_pass, 
+           f"Status: {resp.status_code}, Content-Type: {resp.headers.get('Content-Type')}, Has Disallow rules: {test42_pass}")
+
+print("\n" + "="*80)
+print("BACKEND TESTING COMPLETE")
+print("="*80 + "\n")
