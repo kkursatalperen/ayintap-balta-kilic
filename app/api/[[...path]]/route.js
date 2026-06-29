@@ -157,7 +157,7 @@ async function route(request, { params }) {
     }
     if (q) filter.name = { $regex: q, $options: 'i' };
     const col = await getCollection('products');
-    const all = await col.find(filter, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray();
+    const all = await col.find(filter, { projection: { _id: 0 } }).sort({ createdAt: -1 }).limit(200).toArray();
     return json({ products: all });
   }
   if (path.startsWith('/products/') && method === 'GET') {
@@ -217,7 +217,7 @@ async function route(request, { params }) {
   if (path === '/admin/products' && method === 'GET') {
     const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
     const col = await getCollection('products');
-    const all = await col.find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray();
+    const all = await col.find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).limit(1000).toArray();
     return json({ products: all });
   }
 
@@ -434,7 +434,7 @@ async function route(request, { params }) {
   // ============ BLOG ============
   if (path === '/blog' && method === 'GET') {
     const col = await getCollection('blogs');
-    const all = await col.find({ isPublished: true }, { projection: { _id: 0 } }).sort({ publishedAt: -1, createdAt: -1 }).toArray();
+    const all = await col.find({ isPublished: true }, { projection: { _id: 0 } }).sort({ publishedAt: -1, createdAt: -1 }).limit(50).toArray();
     return json({ posts: all });
   }
   if (path.startsWith('/blog/') && method === 'GET') {
