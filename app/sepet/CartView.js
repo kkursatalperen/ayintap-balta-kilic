@@ -2,32 +2,18 @@
 import { useCart } from '@/lib/store';
 import Link from 'next/link';
 import { Trash2, Plus, Minus, ShoppingCart, Shield, Truck } from 'lucide-react';
-import { toast } from 'sonner';
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function CartPage() {
-  const { items, remove, setQty, total, clear } = useCart();
-  const [checkingOut, setCheckingOut] = useState(false);
+  const { items, remove, setQty, total } = useCart();
   const router = useRouter();
   const subtotal = total();
   const shipping = subtotal >= 5000 ? 0 : 89;
   const grandTotal = subtotal + shipping;
 
-  const checkout = async () => {
+  const checkout = () => {
     if (items.length === 0) return;
-    setCheckingOut(true);
-    try {
-      const res = await fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
-        items, subtotal, shipping, total: grandTotal, paymentMethod: 'iyzico_mock'
-      }) });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Sipariş hatası');
-      toast.success('Siparişiniz oluşturuldu: ' + data.order.orderNumber);
-      clear();
-      setTimeout(() => router.push('/'), 1500);
-    } catch (e) { toast.error(e.message); }
-    finally { setCheckingOut(false); }
+    router.push('/odeme');
   };
 
   return (
@@ -75,8 +61,8 @@ export default function CartPage() {
                     <span>Toplam</span><span className="text-amber-400">{grandTotal.toLocaleString('tr-TR')}₺</span>
                   </div>
                 </div>
-                <button onClick={checkout} disabled={checkingOut} className="w-full mt-6 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold py-4 rounded font-serif tracking-widest hover:from-amber-400 hover:to-amber-500 transition disabled:opacity-50">
-                  {checkingOut ? 'işleniyor...' : 'SİPARİŞİ TAMAMLA'}
+                <button onClick={checkout} className="w-full mt-6 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold py-4 rounded font-serif tracking-widest hover:from-amber-400 hover:to-amber-500 transition disabled:opacity-50">
+                  ÖDEMEYE GEÇ
                 </button>
                 <p className="text-xs text-amber-100/40 text-center mt-4">
                   Ödeme alt yapısı iyzico / PayTR için hazırdır. <br/>(Test modu)
