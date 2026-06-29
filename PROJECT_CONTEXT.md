@@ -43,7 +43,7 @@
 
 ## 3. Mevcut Durum (Snapshot)
 
-### ✅ Tamamlanan (Faz 1)
+### ✅ Tamamlanan (Faz 1 + 2 + 4 + 5)
 - Logo SVG bileşeni (`components/Logo.js`) — antik kalkan + kartal + kılıç + çapraz baltalar
 - Header (scroll-aware), Footer, CartDrawer, mobile menu
 - Dinamik CMS sistem (`homepage_sections` koleksiyonu)

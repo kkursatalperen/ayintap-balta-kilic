@@ -27,6 +27,7 @@ export default function Header({ settings }) {
     { name: 'Anasayfa', href: '/' },
     { name: 'Tüm Ürünler', href: '/urunler' },
     { name: 'Koleksiyonlar', href: '/urunler?kategori=koleksiyon-eserleri' },
+    { name: 'Blog', href: '/blog' },
     { name: 'Hikayemiz', href: '/hakkimizda' },
     { name: 'İletişim', href: '/iletisim' },
   ];

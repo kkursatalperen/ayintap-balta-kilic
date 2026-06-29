@@ -11,6 +11,22 @@ async function fetchData(slug) {
   return { product: pr.product, settings: st.settings || {} };
 }
 
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+  const { product } = await fetchData(slug);
+  if (!product) return { title: 'Ürün bulunamadı' };
+  return {
+    title: `${product.name} · Ayıntap Balta Kılıç`,
+    description: product.description?.slice(0, 160),
+    openGraph: {
+      title: product.name,
+      description: product.description?.slice(0, 160),
+      images: product.images?.length ? [product.images[0]] : [],
+      type: 'website',
+    },
+  };
+}
+
 export default async function ProductPage({ params }) {
   const { slug } = await params;
   const { product, settings } = await fetchData(slug);

@@ -1,17 +1,40 @@
 'use client';
-import { useState } from 'react';
-import { Star, Truck, Shield, Hammer, Flame, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Star, Truck, Shield, Hammer, Flame, Check, Heart } from 'lucide-react';
 import { useCart } from '@/lib/store';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 export default function ProductDetail({ product }) {
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
   const [personalize, setPersonalize] = useState(false);
   const [name, setName] = useState('');
+  const [isFav, setIsFav] = useState(false);
+  const [authed, setAuthed] = useState(false);
   const add = useCart((s) => s.add);
+  const router = useRouter();
   const images = product.images?.length ? product.images : [product.image];
   const finalPrice = product.price + (personalize ? (product.personalizationPrice || 250) : 0);
+
+  useEffect(() => {
+    fetch('/api/auth/me').then(r => r.json()).then(d => {
+      setAuthed(!!d.user);
+      if (d.user) {
+        fetch('/api/me/favorites').then(r => r.json()).then(fav => {
+          setIsFav((fav.favorites || []).some(p => p.id === product.id));
+        });
+      }
+    });
+  }, [product.id]);
+
+  const toggleFav = async () => {
+    if (!authed) { toast.error('Favorilere eklemek için giriş yapın'); router.push('/giris'); return; }
+    const res = await fetch('/api/me/favorites', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productId: product.id }) });
+    const d = await res.json();
+    setIsFav(d.added);
+    toast.success(d.added ? 'Favorilere eklendi' : 'Favorilerden çıkarıldı');
+  };
 
   const handleAdd = () => {
     if (personalize && !name.trim()) { toast.error('Lütfen yazdırılacak ismi giriniz'); return; }
@@ -75,6 +98,9 @@ export default function ProductDetail({ product }) {
               </div>
               <button onClick={handleAdd} disabled={product.stock < 1} className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold py-4 rounded font-serif tracking-widest hover:from-amber-400 hover:to-amber-500 transition disabled:opacity-50">
                 {product.stock > 0 ? 'SEPETE EKLE' : 'STOKTA YOK'}
+              </button>
+              <button onClick={toggleFav} className={`p-4 border rounded transition ${isFav ? 'border-red-500 bg-red-500/10 text-red-400' : 'border-amber-500/30 text-amber-400 hover:bg-amber-500/10'}`} title="Favorilere ekle">
+                <Heart size={20} fill={isFav ? 'currentColor' : 'none'}/>
               </button>
             </div>
 

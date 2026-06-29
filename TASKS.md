@@ -37,7 +37,46 @@
 
 ---
 
-## 🔨 Faz 2 — Kullanıcı Deneyimi & Sipariş Akışı
+## ✅ Faz 2 — Kullanıcı Deneyimi & Sipariş Akışı (TAMAM)
+
+- [x] Kullanıcı dashboard'u `/profil` (5 sekme: Profilim, Siparişler, Favoriler, Adresler, Şifre)
+- [x] `/api/me/profile` profil güncelleme
+- [x] `/api/me/orders` kişisel sipariş geçmişi
+- [x] `/api/me/favorites` GET + POST (toggle)
+- [x] Ürün detay sayfasında favori kalp butonu
+- [x] `/api/me/addresses` GET/POST/PUT/DELETE (varsayılan adres flag)
+- [x] `/api/me/change-password` mevcut şifre doğrulamalı
+- [x] `/api/auth/forgot-password` token + mock email
+- [x] `/api/auth/reset-password` token validation + şifre güncelleme
+- [x] `/api/auth/send-verification` ve `/api/auth/verify-email`
+- [x] `/sifremi-unuttum` + `/sifre-sifirla/[token]` + `/email-dogrula/[token]` sayfaları
+- [x] Responsive sidebar layout ile kullanıcı dashboard
+- [ ] Multi-step checkout (Faz 3'e taşındı, ödeme entegrasyonuyla beraber)
+- [ ] Kupon sistemi UI (Faz 6'ya alındı)
+
+## ✅ Faz 4 — Kargo & Bildirim (TAMAM)
+
+- [x] Sipariş `statusHistory` alanı + timeline
+- [x] `/api/admin/orders/:id` PUT (status, trackingCode, trackingCarrier, paymentStatus, note)
+- [x] Admin panelinde OrderEditor modal (durum geçişi, kargo firması seçici)
+- [x] Kullanıcı profilinde dinamik kargo timeline (5 aşama: pending → paid → preparing → shipped → delivered)
+- [x] Email notification altyapısı (mock — `[EMAIL MOCK]` ile loglanıyor, Resend/SMTP'ye hazır)
+- [x] Toast notification (Sonner) — tüm aksiyonlarda aktif
+
+## ✅ Faz 5 — İçerik & SEO (TAMAM)
+
+- [x] `blogs` koleksiyonu + admin CRUD (kapak görseli, etiketler, SEO alanları, yayın toggle)
+- [x] `/blog` listesi + `/blog/[slug]` detay sayfası
+- [x] Blog yazısına dinamik metadata (`generateMetadata` + OpenGraph)
+- [x] Ürün detay sayfasına dinamik metadata + OpenGraph (görsel dahil)
+- [x] `/sitemap.xml` — statik + ürün + blog + kategori URL'leri
+- [x] `/robots.txt`
+- [x] `/hakkimizda` ve `/iletisim` sayfaları
+- [x] Header'a Blog menü öğesi
+
+---
+
+## 🔨 Faz 2.5 — Bekleyenler
 
 - [ ] Multi-step checkout sayfası (`/odeme`)
   - [ ] Adım 1: Teslimat adresi

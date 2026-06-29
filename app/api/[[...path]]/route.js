@@ -235,9 +235,10 @@ async function route(request, { params }) {
     const body = await readBody(request);
     const user = await getCurrentUser(request);
     const col = await getCollection('orders');
+    const orderNumber = 'ABK-' + Date.now();
     const doc = {
       id: uuid(),
-      orderNumber: 'ABK-' + Date.now(),
+      orderNumber,
       userId: user?.id || null,
       customer: body.customer || {},
       items: body.items || [],
@@ -249,10 +250,246 @@ async function route(request, { params }) {
       paymentStatus: 'pending',
       shippingAddress: body.shippingAddress || {},
       trackingCode: '',
+      trackingCarrier: '',
+      statusHistory: [{ status: 'pending_payment', at: new Date(), note: 'Siparis olusturuldu' }],
       createdAt: new Date()
     };
     await col.insertOne(doc);
+    // Send mock email
+    try { console.log('[EMAIL MOCK] Order confirmation:', orderNumber, '->', body.customer?.email || user?.email); } catch {}
     return json({ order: doc });
+  }
+  if (path.startsWith('/admin/orders/') && method === 'PUT') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const id = path.split('/').pop();
+    const body = await readBody(request);
+    const col = await getCollection('orders');
+    const existing = await col.findOne({ id });
+    if (!existing) return err('Siparis bulunamadi', 404);
+    const update = {};
+    if (body.trackingCode !== undefined) update.trackingCode = body.trackingCode;
+    if (body.trackingCarrier !== undefined) update.trackingCarrier = body.trackingCarrier;
+    if (body.paymentStatus !== undefined) update.paymentStatus = body.paymentStatus;
+    if (body.status && body.status !== existing.status) {
+      update.status = body.status;
+      const history = existing.statusHistory || [];
+      history.push({ status: body.status, at: new Date(), note: body.note || '' });
+      update.statusHistory = history;
+      try { console.log('[EMAIL MOCK] Order status update:', existing.orderNumber, '->', body.status); } catch {}
+    }
+    update.updatedAt = new Date();
+    await col.updateOne({ id }, { $set: update });
+    const o = await col.findOne({ id }, { projection: { _id: 0 } });
+    return json({ order: o });
+  }
+  if (path.startsWith('/orders/') && method === 'GET') {
+    // public order detail by orderNumber (for guest tracking) or by id for logged user
+    const key = path.split('/').pop();
+    const col = await getCollection('orders');
+    const o = await col.findOne({ $or: [{ id: key }, { orderNumber: key }] }, { projection: { _id: 0 } });
+    if (!o) return err('Siparis bulunamadi', 404);
+    return json({ order: o });
+  }
+
+  // ============ ME (USER ENDPOINTS) ============
+  if (path === '/me/orders' && method === 'GET') {
+    const user = await getCurrentUser(request); if (!user) return err('Giris yapmalisiniz', 401);
+    const col = await getCollection('orders');
+    const all = await col.find({ userId: user.id }, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray();
+    return json({ orders: all });
+  }
+  if (path === '/me/profile' && method === 'PUT') {
+    const user = await getCurrentUser(request); if (!user) return err('Giris yapmalisiniz', 401);
+    const body = await readBody(request);
+    const allow = {};
+    if (body.name !== undefined) allow.name = body.name;
+    if (body.phone !== undefined) allow.phone = body.phone;
+    const users = await getCollection('users');
+    await users.updateOne({ id: user.id }, { $set: { ...allow, updatedAt: new Date() } });
+    const u = await users.findOne({ id: user.id });
+    return json({ user: { id: u.id, email: u.email, name: u.name, phone: u.phone, role: u.role } });
+  }
+  if (path === '/me/change-password' && method === 'POST') {
+    const user = await getCurrentUser(request); if (!user) return err('Giris yapmalisiniz', 401);
+    const { oldPassword, newPassword } = await readBody(request);
+    if (!newPassword || newPassword.length < 6) return err('Yeni sifre en az 6 karakter olmali', 400);
+    const ok = await comparePassword(oldPassword || '', user.passwordHash);
+    if (!ok) return err('Mevcut sifre hatali', 401);
+    const hash = await hashPassword(newPassword);
+    const users = await getCollection('users');
+    await users.updateOne({ id: user.id }, { $set: { passwordHash: hash, updatedAt: new Date() } });
+    return json({ ok: true });
+  }
+
+  // ============ FAVORITES ============
+  if (path === '/me/favorites' && method === 'GET') {
+    const user = await getCurrentUser(request); if (!user) return err('Giris yapmalisiniz', 401);
+    const col = await getCollection('favorites');
+    const favs = await col.find({ userId: user.id }, { projection: { _id: 0 } }).toArray();
+    const productIds = favs.map(f => f.productId);
+    const products = await getCollection('products');
+    const list = productIds.length ? await products.find({ id: { $in: productIds } }, { projection: { _id: 0 } }).toArray() : [];
+    return json({ favorites: list });
+  }
+  if (path === '/me/favorites' && method === 'POST') {
+    const user = await getCurrentUser(request); if (!user) return err('Giris yapmalisiniz', 401);
+    const { productId } = await readBody(request);
+    const col = await getCollection('favorites');
+    const existing = await col.findOne({ userId: user.id, productId });
+    if (existing) { await col.deleteOne({ userId: user.id, productId }); return json({ added: false }); }
+    await col.insertOne({ id: uuid(), userId: user.id, productId, createdAt: new Date() });
+    return json({ added: true });
+  }
+
+  // ============ ADDRESSES ============
+  if (path === '/me/addresses' && method === 'GET') {
+    const user = await getCurrentUser(request); if (!user) return err('Giris yapmalisiniz', 401);
+    const col = await getCollection('addresses');
+    const all = await col.find({ userId: user.id }, { projection: { _id: 0 } }).sort({ isDefault: -1, createdAt: -1 }).toArray();
+    return json({ addresses: all });
+  }
+  if (path === '/me/addresses' && method === 'POST') {
+    const user = await getCurrentUser(request); if (!user) return err('Giris yapmalisiniz', 401);
+    const body = await readBody(request);
+    const col = await getCollection('addresses');
+    if (body.isDefault) await col.updateMany({ userId: user.id }, { $set: { isDefault: false } });
+    const doc = {
+      id: uuid(), userId: user.id,
+      title: body.title || 'Adres',
+      fullName: body.fullName || '', phone: body.phone || '',
+      city: body.city || '', district: body.district || '',
+      zipCode: body.zipCode || '', addressLine: body.addressLine || '',
+      isDefault: !!body.isDefault,
+      createdAt: new Date(),
+    };
+    await col.insertOne(doc);
+    return json({ address: doc });
+  }
+  if (path.startsWith('/me/addresses/') && method === 'PUT') {
+    const user = await getCurrentUser(request); if (!user) return err('Giris yapmalisiniz', 401);
+    const id = path.split('/').pop();
+    const body = await readBody(request);
+    delete body._id; delete body.id; delete body.userId;
+    const col = await getCollection('addresses');
+    if (body.isDefault) await col.updateMany({ userId: user.id }, { $set: { isDefault: false } });
+    await col.updateOne({ id, userId: user.id }, { $set: { ...body, updatedAt: new Date() } });
+    const a = await col.findOne({ id }, { projection: { _id: 0 } });
+    return json({ address: a });
+  }
+  if (path.startsWith('/me/addresses/') && method === 'DELETE') {
+    const user = await getCurrentUser(request); if (!user) return err('Giris yapmalisiniz', 401);
+    const id = path.split('/').pop();
+    const col = await getCollection('addresses');
+    await col.deleteOne({ id, userId: user.id });
+    return json({ ok: true });
+  }
+
+  // ============ PASSWORD RESET / EMAIL VERIFY ============
+  if (path === '/auth/forgot-password' && method === 'POST') {
+    const { email } = await readBody(request);
+    const users = await getCollection('users');
+    const user = await users.findOne({ email: (email || '').toLowerCase() });
+    if (user) {
+      const token = uuid();
+      const expires = new Date(Date.now() + 60 * 60 * 1000);
+      await users.updateOne({ id: user.id }, { $set: { resetToken: token, resetExpires: expires } });
+      const link = `${process.env.NEXT_PUBLIC_BASE_URL || ''}/sifre-sifirla/${token}`;
+      console.log('[EMAIL MOCK] Password reset link for', user.email, '->', link);
+    }
+    // always return ok to prevent email enumeration
+    return json({ ok: true, message: 'Eger bu email kayitliysa sifre sifirlama baglantisi gonderildi.' });
+  }
+  if (path === '/auth/reset-password' && method === 'POST') {
+    const { token, password } = await readBody(request);
+    if (!token || !password) return err('Eksik veri', 400);
+    if (password.length < 6) return err('Sifre en az 6 karakter olmali', 400);
+    const users = await getCollection('users');
+    const user = await users.findOne({ resetToken: token });
+    if (!user) return err('Gecersiz veya kullanilmis token', 400);
+    if (user.resetExpires && new Date(user.resetExpires) < new Date()) return err('Token suresi dolmus', 400);
+    const hash = await hashPassword(password);
+    await users.updateOne({ id: user.id }, { $set: { passwordHash: hash }, $unset: { resetToken: '', resetExpires: '' } });
+    return json({ ok: true });
+  }
+  if (path === '/auth/send-verification' && method === 'POST') {
+    const user = await getCurrentUser(request); if (!user) return err('Giris yapmalisiniz', 401);
+    const token = uuid();
+    const users = await getCollection('users');
+    await users.updateOne({ id: user.id }, { $set: { verifyToken: token } });
+    const link = `${process.env.NEXT_PUBLIC_BASE_URL || ''}/email-dogrula/${token}`;
+    console.log('[EMAIL MOCK] Verify link for', user.email, '->', link);
+    return json({ ok: true });
+  }
+  if (path === '/auth/verify-email' && method === 'POST') {
+    const { token } = await readBody(request);
+    const users = await getCollection('users');
+    const user = await users.findOne({ verifyToken: token });
+    if (!user) return err('Gecersiz token', 400);
+    await users.updateOne({ id: user.id }, { $set: { emailVerified: true }, $unset: { verifyToken: '' } });
+    return json({ ok: true });
+  }
+
+  // ============ BLOG ============
+  if (path === '/blog' && method === 'GET') {
+    const col = await getCollection('blogs');
+    const all = await col.find({ isPublished: true }, { projection: { _id: 0 } }).sort({ publishedAt: -1, createdAt: -1 }).toArray();
+    return json({ posts: all });
+  }
+  if (path.startsWith('/blog/') && method === 'GET') {
+    const slug = path.split('/').pop();
+    const col = await getCollection('blogs');
+    const post = await col.findOne({ slug, isPublished: true }, { projection: { _id: 0 } });
+    if (!post) return err('Yazi bulunamadi', 404);
+    return json({ post });
+  }
+  if (path === '/admin/blog' && method === 'GET') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const col = await getCollection('blogs');
+    const all = await col.find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray();
+    return json({ posts: all });
+  }
+  if (path === '/admin/blog' && method === 'POST') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const body = await readBody(request);
+    const slug = body.slug || (body.title || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const doc = {
+      id: uuid(),
+      title: body.title || '',
+      slug,
+      excerpt: body.excerpt || '',
+      content: body.content || '',
+      coverImage: body.coverImage || '',
+      tags: body.tags || [],
+      category: body.category || '',
+      author: user.name || user.email,
+      isPublished: !!body.isPublished,
+      publishedAt: body.isPublished ? new Date() : null,
+      seo: body.seo || {},
+      createdAt: new Date(),
+    };
+    const col = await getCollection('blogs');
+    await col.insertOne(doc);
+    return json({ post: doc });
+  }
+  if (path.startsWith('/admin/blog/') && method === 'PUT') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const id = path.split('/').pop();
+    const body = await readBody(request);
+    delete body._id; delete body.id;
+    const col = await getCollection('blogs');
+    const existing = await col.findOne({ id });
+    if (!existing) return err('Yazi bulunamadi', 404);
+    if (body.isPublished && !existing.isPublished) body.publishedAt = new Date();
+    await col.updateOne({ id }, { $set: { ...body, updatedAt: new Date() } });
+    const p = await col.findOne({ id }, { projection: { _id: 0 } });
+    return json({ post: p });
+  }
+  if (path.startsWith('/admin/blog/') && method === 'DELETE') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const id = path.split('/').pop();
+    const col = await getCollection('blogs');
+    await col.deleteOne({ id });
+    return json({ ok: true });
   }
   if (path === '/admin/orders' && method === 'GET') {
     const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);

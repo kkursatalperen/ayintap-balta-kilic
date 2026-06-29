@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import {
   LayoutDashboard, Package, LayoutGrid, Settings, ShoppingBag, LogOut, Plus, Edit, Trash2,
-  ChevronUp, ChevronDown, Eye, EyeOff, Upload, Save, X, Image as ImageIcon,
+  ChevronUp, ChevronDown, Eye, EyeOff, Upload, Save, X, Image as ImageIcon, FileText, Truck, Check,
 } from 'lucide-react';
 import Logo from '@/components/Logo';
 
@@ -53,6 +53,7 @@ export default function AdminApp() {
             { id: 'products', icon: Package, label: 'Ürünler' },
             { id: 'homepage', icon: LayoutGrid, label: 'Homepage Builder' },
             { id: 'orders', icon: ShoppingBag, label: 'Siparişler' },
+            { id: 'blog', icon: FileText, label: 'Blog' },
             { id: 'settings', icon: Settings, label: 'Site Ayarları' },
           ].map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)}
@@ -76,6 +77,7 @@ export default function AdminApp() {
         {tab === 'products' && <Products/>}
         {tab === 'homepage' && <HomepageBuilder/>}
         {tab === 'orders' && <Orders/>}
+        {tab === 'blog' && <BlogAdmin/>}
         {tab === 'settings' && <SiteSettings/>}
       </main>
     </div>
@@ -550,7 +552,9 @@ function SectionEditor({ section, onClose }) {
 
 function Orders() {
   const [orders, setOrders] = useState([]);
-  useEffect(() => { fetch('/api/admin/orders').then(r => r.json()).then(d => setOrders(d.orders || [])); }, []);
+  const [editing, setEditing] = useState(null);
+  const load = () => fetch('/api/admin/orders').then(r => r.json()).then(d => setOrders(d.orders || []));
+  useEffect(load, []);
   return (
     <div className="p-10">
       <h1 className="font-serif text-4xl text-amber-50 mb-6">Siparişler</h1>
@@ -558,22 +562,238 @@ function Orders() {
         <table className="w-full">
           <thead className="bg-black/30 border-b border-amber-500/10">
             <tr className="text-left text-xs text-amber-400 font-serif tracking-widest">
-              <th className="p-4">SİPARİŞ NO</th><th className="p-4">TARİH</th><th className="p-4">ÜRÜN</th><th className="p-4">TUTAR</th><th className="p-4">DURUM</th>
+              <th className="p-4">SİPARİŞ NO</th><th className="p-4">TARİH</th><th className="p-4">ÜRÜN</th><th className="p-4">TUTAR</th><th className="p-4">DURUM</th><th className="p-4">KARGO</th><th className="p-4"></th>
             </tr>
           </thead>
           <tbody>
-            {orders.length === 0 && <tr><td colSpan={5} className="p-10 text-center text-amber-100/50">Henüz sipariş yok.</td></tr>}
+            {orders.length === 0 && <tr><td colSpan={7} className="p-10 text-center text-amber-100/50">Henüz sipariş yok.</td></tr>}
             {orders.map((o) => (
-              <tr key={o.id} className="border-b border-amber-500/5">
-                <td className="p-4 text-amber-100 font-mono">{o.orderNumber}</td>
-                <td className="p-4 text-amber-100/60 text-sm">{new Date(o.createdAt).toLocaleString('tr-TR')}</td>
+              <tr key={o.id} className="border-b border-amber-500/5 hover:bg-amber-500/5">
+                <td className="p-4 text-amber-100 font-mono text-sm">{o.orderNumber}</td>
+                <td className="p-4 text-amber-100/60 text-xs">{new Date(o.createdAt).toLocaleString('tr-TR')}</td>
                 <td className="p-4 text-amber-100/70 text-sm">{o.items?.length || 0} ürün</td>
                 <td className="p-4 text-amber-400 font-semibold">{o.total?.toLocaleString('tr-TR')}₺</td>
                 <td className="p-4"><span className="text-xs px-2 py-1 rounded bg-amber-500/20 text-amber-300">{o.status}</span></td>
+                <td className="p-4 text-xs text-amber-100/60 font-mono">{o.trackingCode || '—'}</td>
+                <td className="p-4"><button onClick={() => setEditing(o)} className="text-amber-400 hover:text-amber-300"><Edit size={16}/></button></td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+      {editing && <OrderEditor order={editing} onClose={() => { setEditing(null); load(); }}/>}
+    </div>
+  );
+}
+
+const STATUS_OPTIONS = ['pending_payment', 'paid', 'preparing', 'shipped', 'delivered', 'cancelled'];
+const CARRIERS = ['Yurtici Kargo', 'MNG Kargo', 'Aras Kargo', 'PTT Kargo', 'UPS', 'Sürat Kargo'];
+
+function OrderEditor({ order, onClose }) {
+  const [form, setForm] = useState({
+    status: order.status,
+    trackingCode: order.trackingCode || '',
+    trackingCarrier: order.trackingCarrier || '',
+    paymentStatus: order.paymentStatus || '',
+    note: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const save = async () => {
+    setSaving(true);
+    const res = await fetch('/api/admin/orders/' + order.id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    if (res.ok) { toast.success('Sipariş güncellendi'); onClose(); } else toast.error('Hata');
+    setSaving(false);
+  };
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 overflow-y-auto p-6">
+      <div className="max-w-3xl mx-auto bg-[#161616] border border-amber-500/30 rounded-lg">
+        <div className="flex justify-between items-center p-5 border-b border-amber-500/20">
+          <div>
+            <h3 className="font-serif text-xl text-amber-50">Sipariş: <span className="font-mono text-amber-400">{order.orderNumber}</span></h3>
+            <p className="text-xs text-amber-100/50 mt-1">{new Date(order.createdAt).toLocaleString('tr-TR')}</p>
+          </div>
+          <button onClick={onClose}><X size={20}/></button>
+        </div>
+        <div className="p-6 grid grid-cols-2 gap-5">
+          <Field label="Sipariş Durumu">
+            <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className={inp}>
+              {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </Field>
+          <Field label="Ödeme Durumu">
+            <select value={form.paymentStatus} onChange={(e) => setForm({ ...form, paymentStatus: e.target.value })} className={inp}>
+              <option value="pending">pending</option>
+              <option value="paid">paid</option>
+              <option value="failed">failed</option>
+              <option value="refunded">refunded</option>
+            </select>
+          </Field>
+          <Field label="Kargo Firması">
+            <select value={form.trackingCarrier} onChange={(e) => setForm({ ...form, trackingCarrier: e.target.value })} className={inp}>
+              <option value="">— Seç —</option>
+              {CARRIERS.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </Field>
+          <Field label="Takip Kodu"><input value={form.trackingCode} onChange={(e) => setForm({ ...form, trackingCode: e.target.value })} className={inp}/></Field>
+          <div className="col-span-2"><Field label="Not (statü değişimine eklenir)"><textarea rows={2} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} className={inp}/></Field></div>
+
+          <div className="col-span-2">
+            <h4 className="font-serif text-amber-400 text-sm tracking-widest mb-3 mt-2">DURUM GEÇMİŞİ</h4>
+            <div className="space-y-2">
+              {(order.statusHistory || []).map((h, i) => (
+                <div key={i} className="flex items-start gap-3 bg-black/30 p-3 rounded text-sm">
+                  <Check className="text-amber-500 mt-0.5" size={14}/>
+                  <div className="flex-1">
+                    <span className="text-amber-100">{h.status}</span>
+                    {h.note && <span className="text-amber-100/60"> · {h.note}</span>}
+                    <p className="text-xs text-amber-100/40">{new Date(h.at).toLocaleString('tr-TR')}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="col-span-2">
+            <h4 className="font-serif text-amber-400 text-sm tracking-widest mb-3 mt-2">ÜRÜNLER</h4>
+            <div className="space-y-2">
+              {(order.items || []).map((i, idx) => (
+                <div key={idx} className="flex items-center gap-3 bg-black/30 p-3 rounded">
+                  {i.image && <img src={i.image} className="w-12 h-12 object-cover rounded"/>}
+                  <div className="flex-1">
+                    <p className="text-amber-100 text-sm">{i.name} <span className="text-amber-100/50">× {i.qty}</span></p>
+                    {i.personalization && <p className="text-xs text-amber-400">Lazer: "{i.personalization}"</p>}
+                  </div>
+                  <span className="text-amber-400 text-sm">{(i.price * i.qty).toLocaleString('tr-TR')}₺</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 border-t border-amber-500/10 pt-3 text-right">
+              <p className="text-amber-100/60 text-sm">Ara Toplam: {(order.subtotal||0).toLocaleString('tr-TR')}₺</p>
+              <p className="text-amber-100/60 text-sm">Kargo: {(order.shipping||0).toLocaleString('tr-TR')}₺</p>
+              <p className="font-serif text-xl text-amber-400 mt-1">Toplam: {(order.total||0).toLocaleString('tr-TR')}₺</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-5 border-t border-amber-500/20 flex gap-3">
+          <button onClick={save} disabled={saving} className="bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-5 py-2 rounded font-serif tracking-widest flex items-center gap-2"><Save size={16}/>{saving ? '...' : 'KAYDET'}</button>
+          <button onClick={onClose} className="border border-amber-500/30 text-amber-100 px-5 py-2 rounded font-serif tracking-widest">İPTAL</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BlogAdmin() {
+  const [posts, setPosts] = useState([]);
+  const [editing, setEditing] = useState(null);
+  const load = () => fetch('/api/admin/blog').then(r => r.json()).then(d => setPosts(d.posts || []));
+  useEffect(load, []);
+  const del = async (id) => {
+    if (!confirm('Yazı silinsin mi?')) return;
+    await fetch('/api/admin/blog/' + id, { method: 'DELETE' }); toast.success('Silindi'); load();
+  };
+  return (
+    <div className="p-10">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="font-serif text-4xl text-amber-50">Blog Yönetimi</h1>
+          <p className="text-amber-100/50 mt-1">{posts.length} yazı</p>
+        </div>
+        <button onClick={() => setEditing({})} className="bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-5 py-3 rounded font-serif tracking-widest flex items-center gap-2">
+          <Plus size={18}/> YENİ YAZI
+        </button>
+      </div>
+      <div className="space-y-3">
+        {posts.map((p) => (
+          <div key={p.id} className="bg-[#161616] border border-amber-500/10 rounded-lg p-5 flex items-center gap-4">
+            {p.coverImage ? <img src={p.coverImage} className="w-20 h-14 object-cover rounded"/> : <div className="w-20 h-14 bg-amber-500/10 rounded flex items-center justify-center"><FileText className="text-amber-500/40"/></div>}
+            <div className="flex-1">
+              <h3 className="font-serif text-amber-50">{p.title || '(Başlıksız)'}</h3>
+              <p className="text-xs text-amber-100/50">/{p.slug} · {p.category || '—'} · {p.isPublished ? 'Yayında' : 'Taslak'}</p>
+            </div>
+            <button onClick={() => setEditing(p)} className="text-amber-400"><Edit size={16}/></button>
+            <button onClick={() => del(p.id)} className="text-red-500"><Trash2 size={16}/></button>
+          </div>
+        ))}
+        {posts.length === 0 && <div className="text-center text-amber-100/40 py-12">Henüz blog yazısı yok.</div>}
+      </div>
+      {editing && <BlogEditor post={editing} onClose={() => { setEditing(null); load(); }}/>}
+    </div>
+  );
+}
+
+function BlogEditor({ post, onClose }) {
+  const [form, setForm] = useState({ title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: [], category: '', isPublished: false, seo: { title: '', description: '' }, ...post });
+  const [saving, setSaving] = useState(false);
+  const [tagInput, setTagInput] = useState('');
+  const upload = async () => {
+    const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const res = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dataUrl: reader.result, folder: 'blog' }) });
+        const d = await res.json();
+        if (d.url) { setForm({ ...form, coverImage: d.url }); toast.success('Yüklendi'); }
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  };
+  const save = async () => {
+    setSaving(true);
+    const url = post.id ? '/api/admin/blog/' + post.id : '/api/admin/blog';
+    const method = post.id ? 'PUT' : 'POST';
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    if (res.ok) { toast.success('Kaydedildi'); onClose(); } else toast.error('Hata');
+    setSaving(false);
+  };
+  return (
+    <div className="fixed inset-0 bg-black/80 z-50 overflow-y-auto p-6">
+      <div className="max-w-4xl mx-auto bg-[#161616] border border-amber-500/30 rounded-lg">
+        <div className="flex justify-between items-center p-5 border-b border-amber-500/20 sticky top-0 bg-[#161616] z-10">
+          <h3 className="font-serif text-xl text-amber-50">{post.id ? 'Yazı Düzenle' : 'Yeni Blog Yazısı'}</h3>
+          <button onClick={onClose}><X size={20}/></button>
+        </div>
+        <div className="p-6 space-y-4">
+          <Field label="Başlık"><input className={inp} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value, slug: form.slug || e.target.value.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') })}/></Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Slug"><input className={inp} value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })}/></Field>
+            <Field label="Kategori"><input className={inp} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}/></Field>
+          </div>
+          <Field label="Kapak Görseli">
+            <div className="flex gap-2">
+              <input className={inp} value={form.coverImage} onChange={(e) => setForm({ ...form, coverImage: e.target.value })}/>
+              <button onClick={upload} className="px-3 border border-amber-500/30 rounded text-amber-400"><Upload size={16}/></button>
+            </div>
+            {form.coverImage && <img src={form.coverImage} className="w-40 h-24 object-cover rounded mt-2"/>}
+          </Field>
+          <Field label="Özet"><textarea rows={2} className={inp} value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })}/></Field>
+          <Field label="İçerik (Markdown destekler)"><textarea rows={12} className={inp + ' font-mono text-sm'} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })}/></Field>
+          <Field label="Etiketler">
+            <div className="flex flex-wrap gap-2 mb-2">
+              {(form.tags || []).map((t, i) => (
+                <span key={i} className="bg-amber-500/20 text-amber-300 px-2 py-1 rounded text-xs flex items-center gap-1">
+                  {t} <button onClick={() => setForm({ ...form, tags: form.tags.filter((_, j) => j !== i) })}>×</button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input className={inp} placeholder="Etiket" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setForm({ ...form, tags: [...(form.tags||[]), tagInput] }); setTagInput(''); } }}/>
+            </div>
+          </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="SEO Title"><input className={inp} value={form.seo?.title || ''} onChange={(e) => setForm({ ...form, seo: { ...(form.seo||{}), title: e.target.value } })}/></Field>
+            <Field label="SEO Description"><input className={inp} value={form.seo?.description || ''} onChange={(e) => setForm({ ...form, seo: { ...(form.seo||{}), description: e.target.value } })}/></Field>
+          </div>
+          <label className="flex items-center gap-2 text-amber-100">
+            <input type="checkbox" checked={!!form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} className="w-4 h-4 accent-amber-500"/> Yayında
+          </label>
+        </div>
+        <div className="p-5 border-t border-amber-500/20 flex gap-3 sticky bottom-0 bg-[#161616]">
+          <button onClick={save} disabled={saving} className="bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-5 py-2 rounded font-serif tracking-widest flex items-center gap-2"><Save size={16}/>{saving ? '...' : 'KAYDET'}</button>
+          <button onClick={onClose} className="border border-amber-500/30 text-amber-100 px-5 py-2 rounded font-serif tracking-widest">İPTAL</button>
+        </div>
       </div>
     </div>
   );

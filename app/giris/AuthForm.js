@@ -58,6 +58,11 @@ export default function AuthForm({ mode: initialMode }) {
           )}
         </div>
         {mode === 'login' && (
+          <div className="mt-3 text-center">
+            <Link href="/sifremi-unuttum" className="text-xs text-amber-100/60 hover:text-amber-400">Şifremi unuttum</Link>
+          </div>
+        )}
+        {mode === 'login' && (
           <div className="mt-4 text-center text-xs text-amber-100/40">
             Admin girişi: <span className="text-amber-400">admin@ayintap.com / Ayintap2025!</span>
           </div>
