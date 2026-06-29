@@ -4,6 +4,12 @@ import { getCollection } from '@/lib/mongodb';
 import { ensureSeed } from '@/lib/seed';
 import { hashPassword, comparePassword, signToken, getCurrentUser, requireAdmin } from '@/lib/auth';
 import { uploadImage } from '@/lib/cloudinary';
+import {
+  sendOrderConfirmationEmail,
+  sendOrderStatusUpdateEmail,
+  sendPasswordResetEmail,
+  sendVerifyEmail,
+} from '@/lib/email';
 
 const json = (data, status = 200) => NextResponse.json(data, { status });
 const err = (msg, status = 400) => NextResponse.json({ error: msg }, { status });
@@ -257,8 +263,13 @@ async function route(request, { params }) {
       createdAt: new Date()
     };
     await col.insertOne(doc);
-    // Send mock email
-    try { console.log('[EMAIL MOCK] Order confirmation:', orderNumber, '->', body.customer?.email || user?.email); } catch {}
+    // Send order confirmation email (best-effort, never blocks order)
+    try {
+      const toEmail = body.customer?.email || user?.email;
+      if (toEmail) {
+        await sendOrderConfirmationEmail({ to: toEmail, orderNumber, order: doc });
+      }
+    } catch (e) { console.error('[EMAIL] order confirmation failed:', e?.message || e); }
     return json({ order: doc });
   }
   if (path.startsWith('/admin/orders/') && method === 'PUT') {
@@ -277,7 +288,18 @@ async function route(request, { params }) {
       const history = existing.statusHistory || [];
       history.push({ status: body.status, at: new Date(), note: body.note || '' });
       update.statusHistory = history;
-      try { console.log('[EMAIL MOCK] Order status update:', existing.orderNumber, '->', body.status); } catch {}
+      // Send status update email (best-effort)
+      try {
+        const toEmail = existing.customer?.email;
+        if (toEmail) {
+          await sendOrderStatusUpdateEmail({
+            to: toEmail,
+            orderNumber: existing.orderNumber,
+            status: body.status,
+            note: body.note,
+          });
+        }
+      } catch (e) { console.error('[EMAIL] order status update failed:', e?.message || e); }
     }
     update.updatedAt = new Date();
     await col.updateOne({ id }, { $set: update });
@@ -396,7 +418,10 @@ async function route(request, { params }) {
       const expires = new Date(Date.now() + 60 * 60 * 1000);
       await users.updateOne({ id: user.id }, { $set: { resetToken: token, resetExpires: expires } });
       const link = `${process.env.NEXT_PUBLIC_BASE_URL || ''}/sifre-sifirla/${token}`;
-      console.log('[EMAIL MOCK] Password reset link for', user.email, '->', link);
+      // Send password reset email (best-effort)
+      try {
+        await sendPasswordResetEmail({ to: user.email, link });
+      } catch (e) { console.error('[EMAIL] password reset failed:', e?.message || e); }
     }
     // always return ok to prevent email enumeration
     return json({ ok: true, message: 'Eger bu email kayitliysa sifre sifirlama baglantisi gonderildi.' });
@@ -419,7 +444,10 @@ async function route(request, { params }) {
     const users = await getCollection('users');
     await users.updateOne({ id: user.id }, { $set: { verifyToken: token } });
     const link = `${process.env.NEXT_PUBLIC_BASE_URL || ''}/email-dogrula/${token}`;
-    console.log('[EMAIL MOCK] Verify link for', user.email, '->', link);
+    // Send verification email (best-effort)
+    try {
+      await sendVerifyEmail({ to: user.email, link });
+    } catch (e) { console.error('[EMAIL] verify email failed:', e?.message || e); }
     return json({ ok: true });
   }
   if (path === '/auth/verify-email' && method === 'POST') {
