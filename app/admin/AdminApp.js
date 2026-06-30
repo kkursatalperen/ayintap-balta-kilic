@@ -55,7 +55,7 @@ export default function AdminApp() {
             { id: 'homepage', icon: LayoutGrid, label: 'Homepage Builder' },
             { id: 'orders', icon: ShoppingBag, label: 'SipariÅŸler' },
             { id: 'blog', icon: FileText, label: 'Blog' },
-            { id: 'users', icon: UsersIcon, label: 'Üyeler' },
+            { id: 'users', icon: UsersIcon, label: 'ï¿½yeler' },
             { id: 'settings', icon: Settings, label: 'Site AyarlarÄ±' },
           ].map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)}
@@ -866,15 +866,15 @@ function UsersTab() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ role }),
     });
-    if (res.ok) { toast.success('Rol güncellendi'); load(); setSelected(s => s ? { ...s, role } : null); }
+    if (res.ok) { toast.success('Rol gï¿½ncellendi'); load(); setSelected(s => s ? { ...s, role } : null); }
     else toast.error('Hata');
   };
 
   const deleteUser = async (id) => {
-    if (!confirm('Bu üye silinsin mi? Bu iþlem geri alýnamaz.')) return;
+    if (!confirm('Bu ï¿½ye silinsin mi? Bu iï¿½lem geri alï¿½namaz.')) return;
     setDeleting(id);
     const res = await fetch('/api/admin/users/' + id, { method: 'DELETE' });
-    if (res.ok) { toast.success('Üye silindi'); load(); if (selected?.id === id) setSelected(null); }
+    if (res.ok) { toast.success('ï¿½ye silindi'); load(); if (selected?.id === id) setSelected(null); }
     else toast.error('Hata');
     setDeleting(null);
   };
@@ -898,13 +898,13 @@ function UsersTab() {
       {/* Header */}
       <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="font-serif text-4xl text-amber-50">Üye Yönetimi</h1>
-          <p className="text-amber-100/50 mt-1">Toplam {users.length} üye</p>
+          <h1 className="font-serif text-4xl text-amber-50">ï¿½ye Yï¿½netimi</h1>
+          <p className="text-amber-100/50 mt-1">Toplam {users.length} ï¿½ye</p>
         </div>
         <div className="grid grid-cols-3 gap-3 text-center">
           {[
             { label: 'Toplam', val: users.length, color: 'text-amber-400' },
-            { label: 'Müþteri', val: users.filter(u => u.role === 'customer').length, color: 'text-emerald-400' },
+            { label: 'Mï¿½ï¿½teri', val: users.filter(u => u.role === 'customer').length, color: 'text-emerald-400' },
             { label: 'Admin', val: users.filter(u => ['admin','super_admin','editor'].includes(u.role)).length, color: 'text-red-400' },
           ].map((s, i) => (
             <div key={i} className="bg-[#161616] border border-amber-500/10 rounded-lg px-5 py-3">
@@ -921,17 +921,17 @@ function UsersTab() {
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500/50"/>
           <input
             value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Ýsim, email veya telefon ara..."
+            placeholder="ï¿½sim, email veya telefon ara..."
             className="w-full bg-[#161616] border border-amber-500/20 rounded px-4 py-2 pl-9 text-amber-50 text-sm focus:outline-none focus:border-amber-500"
           />
         </div>
         <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
           className="bg-[#161616] border border-amber-500/20 rounded px-4 py-2 text-amber-50 text-sm focus:outline-none focus:border-amber-500">
-          <option value="all">Tüm Roller</option>
-          <option value="customer">Müþteri</option>
-          <option value="editor">Editör</option>
+          <option value="all">Tï¿½m Roller</option>
+          <option value="customer">Mï¿½ï¿½teri</option>
+          <option value="editor">Editï¿½r</option>
           <option value="admin">Admin</option>
-          <option value="super_admin">Süper Admin</option>
+          <option value="super_admin">Sï¿½per Admin</option>
         </select>
       </div>
 
@@ -939,21 +939,21 @@ function UsersTab() {
         {/* Tablo */}
         <div className="flex-1 bg-[#161616] border border-amber-500/10 rounded-lg overflow-hidden">
           {loading ? (
-            <div className="p-12 text-center text-amber-100/50">Yükleniyor...</div>
+            <div className="p-12 text-center text-amber-100/50">Yï¿½kleniyor...</div>
           ) : (
             <table className="w-full">
               <thead className="bg-black/30 border-b border-amber-500/10">
                 <tr className="text-left text-xs text-amber-400 font-serif tracking-widest">
-                  <th className="p-4">ÜYE</th>
+                  <th className="p-4">ï¿½YE</th>
                   <th className="p-4">TELEFON</th>
                   <th className="p-4">ROL</th>
                   <th className="p-4">KAYIT</th>
-                  <th className="p-4">ÝÞLEM</th>
+                  <th className="p-4">ï¿½ï¿½LEM</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 && (
-                  <tr><td colSpan={5} className="p-10 text-center text-amber-100/40">Üye bulunamadý.</td></tr>
+                  <tr><td colSpan={5} className="p-10 text-center text-amber-100/40">ï¿½ye bulunamadï¿½.</td></tr>
                 )}
                 {filtered.map(u => (
                   <tr key={u.id}
@@ -965,16 +965,16 @@ function UsersTab() {
                           {(u.name || u.email || '?')[0].toUpperCase()}
                         </div>
                         <div>
-                          <p className="text-amber-100 text-sm font-medium">{u.name || '—'}</p>
+                          <p className="text-amber-100 text-sm font-medium">{u.name || 'ï¿½'}</p>
                           <p className="text-amber-100/50 text-xs">{u.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 text-amber-100/70 text-sm font-mono">{u.phone || '—'}</td>
+                    <td className="p-4 text-amber-100/70 text-sm font-mono">{u.phone || 'ï¿½'}</td>
                     <td className="p-4">
                       <span className={`text-xs px-2 py-1 rounded ${ROLE_COLORS[u.role] || 'bg-gray-700/30 text-gray-300'}`}>{u.role}</span>
                     </td>
-                    <td className="p-4 text-amber-100/50 text-xs">{u.createdAt ? new Date(u.createdAt).toLocaleDateString('tr-TR') : '—'}</td>
+                    <td className="p-4 text-amber-100/50 text-xs">{u.createdAt ? new Date(u.createdAt).toLocaleDateString('tr-TR') : 'ï¿½'}</td>
                     <td className="p-4">
                       <button onClick={e => { e.stopPropagation(); deleteUser(u.id); }} disabled={deleting === u.id}
                         className="text-red-500 hover:text-red-400 disabled:opacity-40">
@@ -992,7 +992,7 @@ function UsersTab() {
         {selected && (
           <div className="w-80 bg-[#161616] border border-amber-500/20 rounded-lg p-6 flex-shrink-0 self-start sticky top-6">
             <div className="flex justify-between items-start mb-5">
-              <h3 className="font-serif text-lg text-amber-50">Üye Detayý</h3>
+              <h3 className="font-serif text-lg text-amber-50">ï¿½ye Detayï¿½</h3>
               <button onClick={() => setSelected(null)} className="text-amber-100/40 hover:text-amber-100"><X size={18}/></button>
             </div>
 
@@ -1003,7 +1003,7 @@ function UsersTab() {
             <div className="space-y-3 text-sm">
               <div className="flex items-center gap-2 text-amber-100/70">
                 <UsersIcon size={14} className="text-amber-500"/>
-                <span>{selected.name || '—'}</span>
+                <span>{selected.name || 'ï¿½'}</span>
               </div>
               <div className="flex items-center gap-2 text-amber-100/70">
                 <Shield size={14} className="text-amber-500"/>
@@ -1011,16 +1011,16 @@ function UsersTab() {
               </div>
               <div className="flex items-center gap-2 text-amber-100/70">
                 <Phone size={14} className="text-amber-500"/>
-                <span className="font-mono">{selected.phone || '—'}</span>
+                <span className="font-mono">{selected.phone || 'ï¿½'}</span>
               </div>
               <div className="flex items-center gap-2 text-amber-100/70">
                 <Calendar size={14} className="text-amber-500"/>
-                <span>{selected.createdAt ? new Date(selected.createdAt).toLocaleString('tr-TR') : '—'}</span>
+                <span>{selected.createdAt ? new Date(selected.createdAt).toLocaleString('tr-TR') : 'ï¿½'}</span>
               </div>
             </div>
 
             <div className="mt-5 pt-5 border-t border-amber-500/10">
-              <p className="text-xs text-amber-400 font-serif tracking-widest mb-2">ROL DEÐÝÞTÝR</p>
+              <p className="text-xs text-amber-400 font-serif tracking-widest mb-2">ROL DEï¿½ï¿½ï¿½Tï¿½R</p>
               <div className="grid grid-cols-2 gap-2">
                 {ROLES.map(r => (
                   <button key={r} onClick={() => updateRole(selected.id, r)}
@@ -1033,7 +1033,7 @@ function UsersTab() {
 
             <button onClick={() => deleteUser(selected.id)}
               className="mt-4 w-full border border-red-500/40 text-red-400 py-2 rounded text-sm hover:bg-red-500/10 flex items-center justify-center gap-2">
-              <Trash2 size={14}/> Üyeyi Sil
+              <Trash2 size={14}/> ï¿½yeyi Sil
             </button>
           </div>
         )}
