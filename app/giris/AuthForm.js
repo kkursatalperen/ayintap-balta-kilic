@@ -41,7 +41,7 @@ export default function AuthForm({ mode: initialMode }) {
           {mode === 'register' && (
             <>
               <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="İsim Soyisim" className="w-full bg-black/40 border border-amber-500/30 rounded px-4 py-3 text-amber-50 focus:outline-none focus:border-amber-500"/>
-              <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="Telefon" className="w-full bg-black/40 border border-amber-500/30 rounded px-4 py-3 text-amber-50 focus:outline-none focus:border-amber-500"/>
+              <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^0-9]/g, """") })} placeholder="Telefon" type="tel" inputMode="numeric" className="w-full bg-black/40 border border-amber-500/30 rounded px-4 py-3 text-amber-50 focus:outline-none focus:border-amber-500"/>
             </>
           )}
           <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="E-posta" className="w-full bg-black/40 border border-amber-500/30 rounded px-4 py-3 text-amber-50 focus:outline-none focus:border-amber-500"/>

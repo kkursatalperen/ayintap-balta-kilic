@@ -285,7 +285,7 @@ function AddressStep({ user, addresses, selectedAddrId, setSelectedAddrId, showN
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2"><label className={label}>AD SOYAD</label><input value={guest.fullName} onChange={(e) => setGuest({ ...guest, fullName: e.target.value })} className={inp}/></div>
             {!user && <div><label className={label}>E-POSTA</label><input type="email" value={guest.email} onChange={(e) => setGuest({ ...guest, email: e.target.value })} className={inp}/></div>}
-            <div><label className={label}>TELEFON</label><input value={guest.phone} onChange={(e) => setGuest({ ...guest, phone: e.target.value })} className={inp}/></div>
+            <div><label className={label}>TELEFON</label><input value={guest.phone} onChange={(e) => setGuest({ ...guest, phone: e.target.value.replace(/[^0-9]/g, """") })} className={inp} type="tel" inputMode="numeric"/></div>
             <div><label className={label}>İL</label><input value={guest.city} onChange={(e) => setGuest({ ...guest, city: e.target.value })} className={inp}/></div>
             <div><label className={label}>İLÇE</label><input value={guest.district} onChange={(e) => setGuest({ ...guest, district: e.target.value })} className={inp}/></div>
             <div><label className={label}>POSTA KODU</label><input value={guest.zipCode} onChange={(e) => setGuest({ ...guest, zipCode: e.target.value })} className={inp}/></div>
