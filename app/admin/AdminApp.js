@@ -689,7 +689,7 @@ function OrderEditor({ order, onClose }) {
 function BlogAdmin() {
   const [posts, setPosts] = useState([]);
   const [editing, setEditing] = useState(null);
-  const load = () => fetch('/api/admin/blog').then(r => r.json()).then(d => setPosts(d.posts || []));
+  const load = async () => { try { const res = await fetch('/api/admin/blog'); if (!res.ok) { toast.error('Blog yazilari yuklenemedi'); return; } const d = await res.json(); setPosts(d.posts || []); } catch (e) { toast.error('Baglanti hatasi'); } };
   useEffect(load, []);
   const del = async (id) => {
     if (!confirm('Yazı silinsin mi?')) return;
