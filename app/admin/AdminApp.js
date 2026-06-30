@@ -6,9 +6,9 @@ import { toast } from 'sonner';
 import {
   LayoutDashboard, Package, LayoutGrid, Settings, ShoppingBag, LogOut, Plus, Edit, Trash2,
   ChevronUp, ChevronDown, Eye, EyeOff, Upload, Save, X, Image as ImageIcon, FileText, Truck, Check,
+  Users as UsersIcon, Phone, Calendar, Shield, Search, Filter,
 } from 'lucide-react';
 import Logo from '@/components/Logo';
-import AdminErrorBoundary from '@/components/AdminErrorBoundary';
 
 const SECTION_TYPES = [
   { value: 'hero_slider', label: 'Hero Slider' },
@@ -55,6 +55,7 @@ export default function AdminApp() {
             { id: 'homepage', icon: LayoutGrid, label: 'Homepage Builder' },
             { id: 'orders', icon: ShoppingBag, label: 'SipariÅŸler' },
             { id: 'blog', icon: FileText, label: 'Blog' },
+            { id: 'users', icon: UsersIcon, label: 'Üyeler' },
             { id: 'settings', icon: Settings, label: 'Site AyarlarÄ±' },
           ].map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)}
@@ -74,14 +75,13 @@ export default function AdminApp() {
       </aside>
 
       <main className="flex-1 overflow-y-auto">
-        <AdminErrorBoundary key={tab}>
-          {tab === 'dashboard' && <Dashboard/>}
-          {tab === 'products' && <Products/>}
-          {tab === 'homepage' && <HomepageBuilder/>}
-          {tab === 'orders' && <Orders/>}
-          {tab === 'blog' && <BlogAdmin/>}
-          {tab === 'settings' && <SiteSettings/>}
-        </AdminErrorBoundary>
+        {tab === 'dashboard' && <Dashboard/>}
+        {tab === 'products' && <Products/>}
+        {tab === 'homepage' && <HomepageBuilder/>}
+        {tab === 'orders' && <Orders/>}
+        {tab === 'blog' && <BlogAdmin/>}
+        {tab === 'users' && <UsersTab/>}
+        {tab === 'settings' && <SiteSettings/>}
       </main>
     </div>
   );
@@ -132,7 +132,7 @@ function Products() {
     fetch('/api/admin/products').then(r => r.json()).then(d => setProducts(d.products || []));
     fetch('/api/categories').then(r => r.json()).then(d => setCategories(d.categories || []));
   };
-  useEffect(() => { load(); }, []);
+  useEffect(load, []);
 
   const del = async (id) => {
     if (!confirm('ÃœrÃ¼n silinsin mi?')) return;
@@ -312,8 +312,8 @@ function HomepageBuilder() {
   const [editing, setEditing] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
 
-  const load = async () => { try { const res = await fetch('/api/admin/homepage'); if (!res.ok) { toast.error('Bolumler yuklenemedi'); return; } const d = await res.json(); setSections(d.sections || []); } catch (e) { toast.error('Baglanti hatasi, tekrar deneyin'); } };
-  useEffect(() => { load(); }, []);
+  const load = () => fetch('/api/admin/homepage').then(r => r.json()).then(d => setSections(d.sections || []));
+  useEffect(load, []);
 
   const move = async (idx, dir) => {
     const next = [...sections];
@@ -556,8 +556,8 @@ function SectionEditor({ section, onClose }) {
 function Orders() {
   const [orders, setOrders] = useState([]);
   const [editing, setEditing] = useState(null);
-  const load = async () => { try { const res = await fetch('/api/admin/orders'); if (!res.ok) { toast.error('Siparisler yuklenemedi'); return; } const d = await res.json(); setOrders(d.orders || []); } catch (e) { toast.error('Baglanti hatasi, tekrar deneyin'); } };
-  useEffect(() => { load(); }, []);
+  const load = () => fetch('/api/admin/orders').then(r => r.json()).then(d => setOrders(d.orders || []));
+  useEffect(load, []);
   return (
     <div className="p-10">
       <h1 className="font-serif text-4xl text-amber-50 mb-6">SipariÅŸler</h1>
@@ -689,8 +689,8 @@ function OrderEditor({ order, onClose }) {
 function BlogAdmin() {
   const [posts, setPosts] = useState([]);
   const [editing, setEditing] = useState(null);
-  const load = async () => { try { const res = await fetch('/api/admin/blog'); if (!res.ok) { toast.error('Blog yazilari yuklenemedi'); return; } const d = await res.json(); setPosts(d.posts || []); } catch (e) { toast.error('Baglanti hatasi'); } };
-  useEffect(() => { load(); }, []);
+  const load = () => fetch('/api/admin/blog').then(r => r.json()).then(d => setPosts(d.posts || []));
+  useEffect(load, []);
   const del = async (id) => {
     if (!confirm('YazÄ± silinsin mi?')) return;
     await fetch('/api/admin/blog/' + id, { method: 'DELETE' }); toast.success('Silindi'); load();
@@ -838,6 +838,206 @@ function SiteSettings() {
       <button onClick={save} disabled={saving} className="mt-6 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-8 py-3 rounded font-serif tracking-widest flex items-center gap-2">
         <Save size={18}/>{saving ? 'KAYDEDÄ°LÄ°YOR...' : 'AYARLARI KAYDET'}
       </button>
+    </div>
+  );
+}
+
+// ============ ADMIN USERS TAB ============
+function UsersTab() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [selected, setSelected] = useState(null);
+  const [deleting, setDeleting] = useState(null);
+
+  const load = () => {
+    setLoading(true);
+    fetch('/api/admin/users').then(r => r.json()).then(d => {
+      setUsers(d.users || []);
+      setLoading(false);
+    });
+  };
+  useEffect(load, []);
+
+  const updateRole = async (id, role) => {
+    const res = await fetch('/api/admin/users/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role }),
+    });
+    if (res.ok) { toast.success('Rol güncellendi'); load(); setSelected(s => s ? { ...s, role } : null); }
+    else toast.error('Hata');
+  };
+
+  const deleteUser = async (id) => {
+    if (!confirm('Bu üye silinsin mi? Bu iþlem geri alýnamaz.')) return;
+    setDeleting(id);
+    const res = await fetch('/api/admin/users/' + id, { method: 'DELETE' });
+    if (res.ok) { toast.success('Üye silindi'); load(); if (selected?.id === id) setSelected(null); }
+    else toast.error('Hata');
+    setDeleting(null);
+  };
+
+  const filtered = users.filter(u => {
+    const matchSearch = !search || u.email?.toLowerCase().includes(search.toLowerCase()) || u.name?.toLowerCase().includes(search.toLowerCase()) || u.phone?.includes(search);
+    const matchRole = roleFilter === 'all' || u.role === roleFilter;
+    return matchSearch && matchRole;
+  });
+
+  const ROLE_COLORS = {
+    super_admin: 'bg-red-700/30 text-red-300',
+    admin: 'bg-amber-700/30 text-amber-300',
+    editor: 'bg-blue-700/30 text-blue-300',
+    customer: 'bg-emerald-700/30 text-emerald-300',
+  };
+  const ROLES = ['customer', 'editor', 'admin', 'super_admin'];
+
+  return (
+    <div className="p-10">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <h1 className="font-serif text-4xl text-amber-50">Üye Yönetimi</h1>
+          <p className="text-amber-100/50 mt-1">Toplam {users.length} üye</p>
+        </div>
+        <div className="grid grid-cols-3 gap-3 text-center">
+          {[
+            { label: 'Toplam', val: users.length, color: 'text-amber-400' },
+            { label: 'Müþteri', val: users.filter(u => u.role === 'customer').length, color: 'text-emerald-400' },
+            { label: 'Admin', val: users.filter(u => ['admin','super_admin','editor'].includes(u.role)).length, color: 'text-red-400' },
+          ].map((s, i) => (
+            <div key={i} className="bg-[#161616] border border-amber-500/10 rounded-lg px-5 py-3">
+              <p className={`font-serif text-2xl ${s.color}`}>{s.val}</p>
+              <p className="text-xs text-amber-100/50">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Filtreler */}
+      <div className="flex gap-3 mb-6">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500/50"/>
+          <input
+            value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Ýsim, email veya telefon ara..."
+            className="w-full bg-[#161616] border border-amber-500/20 rounded px-4 py-2 pl-9 text-amber-50 text-sm focus:outline-none focus:border-amber-500"
+          />
+        </div>
+        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
+          className="bg-[#161616] border border-amber-500/20 rounded px-4 py-2 text-amber-50 text-sm focus:outline-none focus:border-amber-500">
+          <option value="all">Tüm Roller</option>
+          <option value="customer">Müþteri</option>
+          <option value="editor">Editör</option>
+          <option value="admin">Admin</option>
+          <option value="super_admin">Süper Admin</option>
+        </select>
+      </div>
+
+      <div className="flex gap-6">
+        {/* Tablo */}
+        <div className="flex-1 bg-[#161616] border border-amber-500/10 rounded-lg overflow-hidden">
+          {loading ? (
+            <div className="p-12 text-center text-amber-100/50">Yükleniyor...</div>
+          ) : (
+            <table className="w-full">
+              <thead className="bg-black/30 border-b border-amber-500/10">
+                <tr className="text-left text-xs text-amber-400 font-serif tracking-widest">
+                  <th className="p-4">ÜYE</th>
+                  <th className="p-4">TELEFON</th>
+                  <th className="p-4">ROL</th>
+                  <th className="p-4">KAYIT</th>
+                  <th className="p-4">ÝÞLEM</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 && (
+                  <tr><td colSpan={5} className="p-10 text-center text-amber-100/40">Üye bulunamadý.</td></tr>
+                )}
+                {filtered.map(u => (
+                  <tr key={u.id}
+                    onClick={() => setSelected(u)}
+                    className={`border-b border-amber-500/5 cursor-pointer transition ${selected?.id === u.id ? 'bg-amber-500/10' : 'hover:bg-amber-500/5'}`}>
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-sm font-serif text-black font-bold flex-shrink-0">
+                          {(u.name || u.email || '?')[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-amber-100 text-sm font-medium">{u.name || '—'}</p>
+                          <p className="text-amber-100/50 text-xs">{u.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-amber-100/70 text-sm font-mono">{u.phone || '—'}</td>
+                    <td className="p-4">
+                      <span className={`text-xs px-2 py-1 rounded ${ROLE_COLORS[u.role] || 'bg-gray-700/30 text-gray-300'}`}>{u.role}</span>
+                    </td>
+                    <td className="p-4 text-amber-100/50 text-xs">{u.createdAt ? new Date(u.createdAt).toLocaleDateString('tr-TR') : '—'}</td>
+                    <td className="p-4">
+                      <button onClick={e => { e.stopPropagation(); deleteUser(u.id); }} disabled={deleting === u.id}
+                        className="text-red-500 hover:text-red-400 disabled:opacity-40">
+                        <Trash2 size={15}/>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Detay Paneli */}
+        {selected && (
+          <div className="w-80 bg-[#161616] border border-amber-500/20 rounded-lg p-6 flex-shrink-0 self-start sticky top-6">
+            <div className="flex justify-between items-start mb-5">
+              <h3 className="font-serif text-lg text-amber-50">Üye Detayý</h3>
+              <button onClick={() => setSelected(null)} className="text-amber-100/40 hover:text-amber-100"><X size={18}/></button>
+            </div>
+
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-2xl font-serif text-black font-bold mx-auto mb-4">
+              {(selected.name || selected.email || '?')[0].toUpperCase()}
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center gap-2 text-amber-100/70">
+                <UsersIcon size={14} className="text-amber-500"/>
+                <span>{selected.name || '—'}</span>
+              </div>
+              <div className="flex items-center gap-2 text-amber-100/70">
+                <Shield size={14} className="text-amber-500"/>
+                <span>{selected.email}</span>
+              </div>
+              <div className="flex items-center gap-2 text-amber-100/70">
+                <Phone size={14} className="text-amber-500"/>
+                <span className="font-mono">{selected.phone || '—'}</span>
+              </div>
+              <div className="flex items-center gap-2 text-amber-100/70">
+                <Calendar size={14} className="text-amber-500"/>
+                <span>{selected.createdAt ? new Date(selected.createdAt).toLocaleString('tr-TR') : '—'}</span>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-5 border-t border-amber-500/10">
+              <p className="text-xs text-amber-400 font-serif tracking-widest mb-2">ROL DEÐÝÞTÝR</p>
+              <div className="grid grid-cols-2 gap-2">
+                {ROLES.map(r => (
+                  <button key={r} onClick={() => updateRole(selected.id, r)}
+                    className={`py-2 px-3 rounded text-xs font-serif tracking-wider border transition ${selected.role === r ? 'bg-amber-500 text-black border-amber-500' : 'border-amber-500/20 text-amber-100/70 hover:bg-amber-500/10'}`}>
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button onClick={() => deleteUser(selected.id)}
+              className="mt-4 w-full border border-red-500/40 text-red-400 py-2 rounded text-sm hover:bg-red-500/10 flex items-center justify-center gap-2">
+              <Trash2 size={14}/> Üyeyi Sil
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
