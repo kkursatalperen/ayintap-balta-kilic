@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { ChevronRight, ChevronLeft, Star, Flame, Hammer, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
