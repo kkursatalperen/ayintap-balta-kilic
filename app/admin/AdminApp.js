@@ -65,7 +65,7 @@ export default function AdminApp() {
         </nav>
         <div className="p-4 border-t border-amber-500/20">
           <p className="text-xs text-amber-100/40">{user?.email}</p>
-          <p className="text-xs text-amber-400 mb-3">{{ super_admin: "Süper Admin", admin: "Admin", editor: "Editör", customer: "Müþteri" }[user?.role] || user?.role}</p>
+          <p className="text-xs text-amber-400 mb-3">{user?.role === "super_admin" ? "Süper Admin" : user?.role === "admin" ? "Admin" : user?.role === "editor" ? "Editör" : "Yönetici"}</p>
           <Link href="/" className="block text-center text-xs text-amber-100/60 mb-2 hover:text-amber-400">Siteyi GÃ¶rÃ¼ntÃ¼le</Link>
           <button onClick={logout} className="w-full flex items-center justify-center gap-2 border border-red-500/40 text-red-400 py-2 rounded text-sm hover:bg-red-500/10">
             <LogOut size={14}/> Ã‡Ä±kÄ±ÅŸ Yap
