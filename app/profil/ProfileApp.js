@@ -210,7 +210,7 @@ function FavoritesTab() {
   const [favs, setFavs] = useState([]);
   const [loading, setLoading] = useState(true);
   const load = () => fetch('/api/me/favorites').then(r => r.json()).then(d => { setFavs(d.favorites || []); setLoading(false); });
-  useEffect(load, []);
+  useEffect(() => { load(); }, []);
   const remove = async (productId) => {
     await fetch('/api/me/favorites', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productId }) });
     toast.success('Favorilerden cikarildi'); load();
@@ -243,7 +243,7 @@ function AddressesTab() {
   const [addresses, setAddresses] = useState([]);
   const [editing, setEditing] = useState(null);
   const load = () => fetch('/api/me/addresses').then(r => r.json()).then(d => setAddresses(d.addresses || []));
-  useEffect(load, []);
+  useEffect(() => { load(); }, []);
   const del = async (id) => {
     if (!confirm('Adres silinsin mi?')) return;
     await fetch('/api/me/addresses/' + id, { method: 'DELETE' });
