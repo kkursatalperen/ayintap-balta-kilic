@@ -101,7 +101,7 @@ function ProfileTab({ user, onUpdate }) {
       <div className="space-y-4 max-w-md">
         <div><label className="text-xs text-amber-400 font-serif tracking-widest block mb-1">E-POSTA</label><input disabled value={user.email} className={inp + ' opacity-50'}/></div>
         <div><label className="text-xs text-amber-400 font-serif tracking-widest block mb-1">İSİM SOYİSİM</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inp}/></div>
-        <div><label className="text-xs text-amber-400 font-serif tracking-widest block mb-1">TELEFON</label><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^0-9]/g, """") })} className={inp} type="tel" inputMode="numeric"/></div>
+        <div><label className="text-xs text-amber-400 font-serif tracking-widest block mb-1">TELEFON</label><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^0-9]/g, '') })} className={inp} type="tel" inputMode="numeric"/></div>
         <button onClick={save} disabled={saving} className={btn}>{saving ? 'KAYDEDİLİYOR...' : 'GÜNCELLE'}</button>
       </div>
     </div>
@@ -296,7 +296,7 @@ function AddressEditor({ address, onClose }) {
         <h3 className="font-serif text-xl text-amber-50 mb-5">{address.id ? 'Adres Düzenle' : 'Yeni Adres'}</h3>
         <div className="grid grid-cols-2 gap-3">
           <input className={inp} placeholder="Başlık (Ev, İş)" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}/>
-          <input className={inp} placeholder="Telefon" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^0-9]/g, """") })} type="tel" inputMode="numeric"/>
+          <input className={inp} placeholder="Telefon" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^0-9]/g, '') })} type="tel" inputMode="numeric"/>
           <input className={inp + ' col-span-2'} placeholder="İsim Soyisim" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })}/>
           <input className={inp} placeholder="İl" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}/>
           <input className={inp} placeholder="İlçe" value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })}/>
