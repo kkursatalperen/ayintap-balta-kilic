@@ -8,6 +8,7 @@ import {
   ChevronUp, ChevronDown, Eye, EyeOff, Upload, Save, X, Image as ImageIcon, FileText, Truck, Check,
 } from 'lucide-react';
 import Logo from '@/components/Logo';
+import AdminErrorBoundary from '@/components/AdminErrorBoundary';
 
 const SECTION_TYPES = [
   { value: 'hero_slider', label: 'Hero Slider' },
@@ -73,12 +74,14 @@ export default function AdminApp() {
       </aside>
 
       <main className="flex-1 overflow-y-auto">
-        {tab === 'dashboard' && <Dashboard/>}
-        {tab === 'products' && <Products/>}
-        {tab === 'homepage' && <HomepageBuilder/>}
-        {tab === 'orders' && <Orders/>}
-        {tab === 'blog' && <BlogAdmin/>}
-        {tab === 'settings' && <SiteSettings/>}
+        <AdminErrorBoundary key={tab}>
+          {tab === 'dashboard' && <Dashboard/>}
+          {tab === 'products' && <Products/>}
+          {tab === 'homepage' && <HomepageBuilder/>}
+          {tab === 'orders' && <Orders/>}
+          {tab === 'blog' && <BlogAdmin/>}
+          {tab === 'settings' && <SiteSettings/>}
+        </AdminErrorBoundary>
       </main>
     </div>
   );
@@ -309,8 +312,8 @@ function HomepageBuilder() {
   const [editing, setEditing] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
 
-  const load = () => fetch('/api/admin/homepage').then(r => r.json()).then(d => setSections(d.sections || []));
-  useEffect(load, []);
+  const load = async () => { try { const res = await fetch('/api/admin/homepage'); if (!res.ok) { toast.error('Bolumler yuklenemedi'); return; } const d = await res.json(); setSections(d.sections || []); } catch (e) { toast.error('Baglanti hatasi, tekrar deneyin'); } };
+  useEffect(() => { load(); }, []);
 
   const move = async (idx, dir) => {
     const next = [...sections];
@@ -553,8 +556,8 @@ function SectionEditor({ section, onClose }) {
 function Orders() {
   const [orders, setOrders] = useState([]);
   const [editing, setEditing] = useState(null);
-  const load = () => fetch('/api/admin/orders').then(r => r.json()).then(d => setOrders(d.orders || []));
-  useEffect(load, []);
+  const load = async () => { try { const res = await fetch('/api/admin/orders'); if (!res.ok) { toast.error('Siparisler yuklenemedi'); return; } const d = await res.json(); setOrders(d.orders || []); } catch (e) { toast.error('Baglanti hatasi, tekrar deneyin'); } };
+  useEffect(() => { load(); }, []);
   return (
     <div className="p-10">
       <h1 className="font-serif text-4xl text-amber-50 mb-6">Siparişler</h1>

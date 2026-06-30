@@ -26,6 +26,8 @@ async function route(request, { params }) {
   // Always ensure data is seeded
   try { await ensureSeed(); } catch (e) { /* ignore */ }
 
+  try {
+
   // ---- HEALTH ----
   if (path === '/' || path === '') return json({ ok: true, name: 'Ayintap Balta Kilic API', time: new Date().toISOString() });
 
@@ -40,7 +42,7 @@ async function route(request, { params }) {
     const user = { id: uuid(), email: email.toLowerCase(), name: name || '', phone: phone || '', passwordHash: hash, role: 'customer', isActive: true, createdAt: new Date() };
     await users.insertOne(user);
     const token = signToken({ id: user.id, role: user.role });
-    const safe = { id: user.id, email: user.email, name: user.name, role: user.role };
+    const safe = { id: user.id, email: user.email, name: user.name, phone: user.phone, role: user.role };
     const res = json({ user: safe, token });
     res.cookies.set('auth_token', token, { httpOnly: true, sameSite: 'lax', maxAge: 60 * 60 * 24 * 7, path: '/' });
     return res;
@@ -53,7 +55,7 @@ async function route(request, { params }) {
     const ok = await comparePassword(password, user.passwordHash);
     if (!ok) return err('Şifre hatalı', 401);
     const token = signToken({ id: user.id, role: user.role });
-    const safe = { id: user.id, email: user.email, name: user.name, role: user.role };
+    const safe = { id: user.id, email: user.email, name: user.name, phone: user.phone, role: user.role };
     const res = json({ user: safe, token });
     res.cookies.set('auth_token', token, { httpOnly: true, sameSite: 'lax', maxAge: 60 * 60 * 24 * 7, path: '/' });
     return res;
@@ -61,7 +63,7 @@ async function route(request, { params }) {
   if (path === '/auth/me' && method === 'GET') {
     const user = await getCurrentUser(request);
     if (!user) return json({ user: null });
-    return json({ user: { id: user.id, email: user.email, name: user.name, role: user.role } });
+    return json({ user: { id: user.id, email: user.email, name: user.name, phone: user.phone, role: user.role } });
   }
   if (path === '/auth/logout' && method === 'POST') {
     const res = json({ ok: true });
@@ -542,6 +544,10 @@ async function route(request, { params }) {
   }
 
   return err('Endpoint bulunamadı: ' + path, 404);
+  } catch (e) {
+    console.error('[API ERROR]', path, method, e);
+    return err('Sunucu hatasi olustu, lutfen tekrar deneyin', 500);
+  }
 }
 
 export const GET = route;
