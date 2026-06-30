@@ -132,7 +132,7 @@ function Products() {
     fetch('/api/admin/products').then(r => r.json()).then(d => setProducts(d.products || []));
     fetch('/api/categories').then(r => r.json()).then(d => setCategories(d.categories || []));
   };
-  useEffect(load, []);
+  useEffect(() => { load(); }, []);
 
   const del = async (id) => {
     if (!confirm('Ürün silinsin mi?')) return;
@@ -690,7 +690,7 @@ function BlogAdmin() {
   const [posts, setPosts] = useState([]);
   const [editing, setEditing] = useState(null);
   const load = async () => { try { const res = await fetch('/api/admin/blog'); if (!res.ok) { toast.error('Blog yazilari yuklenemedi'); return; } const d = await res.json(); setPosts(d.posts || []); } catch (e) { toast.error('Baglanti hatasi'); } };
-  useEffect(load, []);
+  useEffect(() => { load(); }, []);
   const del = async (id) => {
     if (!confirm('Yazı silinsin mi?')) return;
     await fetch('/api/admin/blog/' + id, { method: 'DELETE' }); toast.success('Silindi'); load();
