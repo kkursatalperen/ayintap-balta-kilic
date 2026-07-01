@@ -22,8 +22,10 @@ const SECTION_TYPES = [
 
 export default function AdminApp() {
   const [user, setUser] = useState(null);
-  const [tab, setTab] = useState('dashboard');
+  const [tab, setTab] = useState('profile');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  
   const router = useRouter();
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export default function AdminApp() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#0d0d0d] text-amber-100">Yükleniyor...</div>;
 
- const [sidebarOpen, setSidebarOpen] = useState(false);
+ 
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] text-amber-50 flex">
