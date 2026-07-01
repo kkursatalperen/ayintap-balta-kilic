@@ -16,6 +16,10 @@ export const metadata = {
     locale: 'tr_TR',
   },
   robots: 'index, follow',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/favicon.png',
+  },
 };
 
 export default function RootLayout({ children }) {
