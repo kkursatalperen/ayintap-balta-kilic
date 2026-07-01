@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -12,21 +12,21 @@ import {
 const STEPS = [
   { id: 1, key: 'address', label: 'Adres', icon: MapPin },
   { id: 2, key: 'shipping', label: 'Teslimat', icon: Truck },
-  { id: 3, key: 'payment', label: 'Ã–deme', icon: CreditCard },
+  { id: 3, key: 'payment', label: 'Ödeme', icon: CreditCard },
   { id: 4, key: 'review', label: 'Onay', icon: ClipboardCheck },
 ];
 
 const SHIPPING_METHODS = [
-  { id: 'standard', label: 'Standart Kargo', desc: '3-5 iÅŸ gÃ¼nÃ¼ Â· YurtiÃ§i Kargo', price: 89, freeOver: 5000 },
-  { id: 'express', label: 'Express Kargo', desc: '1-2 iÅŸ gÃ¼nÃ¼ Â· Aras Kargo', price: 149, freeOver: 10000 },
-  { id: 'pickup', label: 'AtÃ¶lyeden Teslim', desc: 'Gaziantep / Åahinbey adresimizden', price: 0 },
+  { id: 'standard', label: 'Standart Kargo', desc: '3-5 iş günü · Yurtiçi Kargo', price: 89, freeOver: 5000 },
+  { id: 'express', label: 'Express Kargo', desc: '1-2 iş günü · Aras Kargo', price: 149, freeOver: 10000 },
+  { id: 'pickup', label: 'Atölyeden Teslim', desc: 'Gaziantep / Şahinbey adresimizden', price: 0 },
 ];
 
 const PAYMENT_METHODS = [
-  { id: 'iyzico', label: 'Kredi / Banka KartÄ± (iyzico)', desc: '3D Secure ile gÃ¼venli Ã¶deme', icon: CreditCard, recommended: true, mock: true },
-  { id: 'paytr', label: 'Kredi KartÄ± (PayTR)', desc: 'Alternatif Ã¶deme saÄŸlayÄ±cÄ±', icon: Smartphone, mock: true },
-  { id: 'transfer', label: 'Havale / EFT', desc: 'Banka hesabÄ±mÄ±za havale (3 iÅŸ gÃ¼nÃ¼ onay)', icon: Building2 },
-  { id: 'cod', label: 'KapÄ±da Ã–deme', desc: 'TeÅŸlimat sÄ±rasÄ±nda nakit/kart', icon: Wallet, extraFee: 25 },
+  { id: 'iyzico', label: 'Kredi / Banka Kartı (iyzico)', desc: '3D Secure ile güvenli ödeme', icon: CreditCard, recommended: true, mock: true },
+  { id: 'paytr', label: 'Kredi Kartı (PayTR)', desc: 'Alternatif ödeme sağlayıcı', icon: Smartphone, mock: true },
+  { id: 'transfer', label: 'Havale / EFT', desc: 'Banka hesabımıza havale (3 iş günü onay)', icon: Building2 },
+  { id: 'cod', label: 'Kapıda Ödeme', desc: 'Teşlimat sırasında nakit/kart', icon: Wallet, extraFee: 25 },
 ];
 
 export default function CheckoutFlow() {
@@ -73,13 +73,13 @@ export default function CheckoutFlow() {
   useEffect(() => { setMounted(true); }, []);
 
   if (!mounted) return <main className="pt-32 min-h-screen text-center text-amber-100/50">Yükleniyor...</main>;
-  if (!authChecked) return <main className="pt-32 min-h-screen text-center text-amber-100/50">YÃ¼kleniyor...</main>;
+  if (!authChecked) return <main className="pt-32 min-h-screen text-center text-amber-100/50">Yükleniyor...</main>;
   if (items.length === 0) {
     return (
       <main className="pt-32 pb-20 min-h-screen">
         <div className="max-w-md mx-auto text-center px-6">
-          <p className="font-serif text-2xl text-amber-100/60">Sepetiniz boÅŸ</p>
-          <Link href="/urunler" className="inline-block mt-6 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-8 py-3 rounded font-serif tracking-widest">ALIÅVERÄ°ÅE BAÅLA</Link>
+          <p className="font-serif text-2xl text-amber-100/60">Sepetiniz boş</p>
+          <Link href="/urunler" className="inline-block mt-6 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-8 py-3 rounded font-serif tracking-widest">ALIŞVERİŞE BAŞLA</Link>
         </div>
       </main>
     );
@@ -112,7 +112,7 @@ export default function CheckoutFlow() {
   };
 
   const next = async () => {
-    if (!canProceed()) { toast.error('LÃ¼tfen gerekli alanlarÄ± doldurun'); return; }
+    if (!canProceed()) { toast.error('Lütfen gerekli alanları doldurun'); return; }
     if (step === 1 && user && showNewAddr && guest.addressLine) {
       // Save new address for logged user
       const res = await fetch('/api/me/addresses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...guest, title: 'Yeni Adres', isDefault: addresses.length === 0 }) });
@@ -149,12 +149,12 @@ export default function CheckoutFlow() {
         })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'SipariÅŸ oluÅŸturulamadÄ±');
+      if (!res.ok) throw new Error(data.error || 'Sipariş oluşturulamadı');
       // Payment routing
       if (paymentMethod === 'iyzico' || paymentMethod === 'paytr') {
-        toast.success('SipariÅŸ oluÅŸturuldu! Ã–deme sayfasÄ±na yÃ¶nlendiriliyorsunuz... (test modu)');
+        toast.success('Sipariş oluşturuldu! Ödeme sayfasına yönlendiriliyorsunuz... (test modu)');
       } else {
-        toast.success('SipariÅŸiniz alÄ±ndÄ±! SipariÅŸ no: ' + data.order.orderNumber);
+        toast.success('Siparişiniz alındı! Sipariş no: ' + data.order.orderNumber);
       }
       clear();
       setTimeout(() => router.push('/odeme/basarili?no=' + data.order.orderNumber), 800);
@@ -186,7 +186,7 @@ export default function CheckoutFlow() {
           {/* Mobile stepper */}
           <div className="md:hidden">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-amber-100/60">AdÄ±m {step}/{STEPS.length}</span>
+              <span className="text-xs text-amber-100/60">Adım {step}/{STEPS.length}</span>
               <span className="text-amber-400 font-serif">{STEPS[step-1].label}</span>
             </div>
             <div className="h-1 bg-amber-500/20 rounded-full overflow-hidden">
@@ -206,10 +206,10 @@ export default function CheckoutFlow() {
             </div>
             <div className="mt-6 flex justify-between gap-3">
               <button onClick={() => step > 1 ? setStep(step - 1) : router.push('/sepet')} className="border border-amber-500/30 text-amber-100 px-5 py-3 rounded font-serif tracking-widest hover:bg-amber-500/5 transition flex items-center gap-2">
-                <ChevronLeft size={18}/> {step > 1 ? 'GERÄ°' : 'SEPETE DÃ–N'}
+                <ChevronLeft size={18}/> {step > 1 ? 'GERİ' : 'SEPETE DÖN'}
               </button>
               <button onClick={next} disabled={!canProceed() || placing} className="bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-6 py-3 rounded font-serif tracking-widest hover:from-amber-400 hover:to-amber-500 transition disabled:opacity-50 flex items-center gap-2">
-                {placing ? 'Ä°ÅŸLENÄ°YOR...' : step < 4 ? (<>DEVAM ET <ChevronRight size={18}/></>) : (<>SÄ°PARÄ°ÅÄ° TAMAMLA <Lock size={16}/></>)}
+                {placing ? 'İşLENİYOR...' : step < 4 ? (<>DEVAM ET <ChevronRight size={18}/></>) : (<>SİPARİŞİ TAMAMLA <Lock size={16}/></>)}
               </button>
             </div>
           </div>
@@ -217,7 +217,7 @@ export default function CheckoutFlow() {
           {/* Order summary */}
           <aside className="lg:col-span-1">
             <div className="bg-[#161616] border border-amber-500/20 rounded-lg p-6 sticky top-28">
-              <h3 className="font-serif text-xl text-amber-50 mb-5">SipariÅŸ Ã–zeti</h3>
+              <h3 className="font-serif text-xl text-amber-50 mb-5">Sipariş Özeti</h3>
               <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
                 {items.map((i) => (
                   <div key={i.key} className="flex gap-3">
@@ -227,21 +227,21 @@ export default function CheckoutFlow() {
                       {i.personalization && <p className="text-xs text-amber-400">Lazer: "{i.personalization}"</p>}
                       <p className="text-xs text-amber-100/60">{i.qty} adet</p>
                     </div>
-                    <span className="text-sm text-amber-400 font-medium whitespace-nowrap">{((i.price + i.personalizationPrice) * i.qty).toLocaleString('tr-TR')}â‚º</span>
+                    <span className="text-sm text-amber-400 font-medium whitespace-nowrap">{((i.price + i.personalizationPrice) * i.qty).toLocaleString('tr-TR')}₺</span>
                   </div>
                 ))}
               </div>
               <div className="mt-5 pt-5 border-t border-amber-500/10 space-y-2 text-sm">
-                <div className="flex justify-between text-amber-100/80"><span>Ara Toplam</span><span>{subtotal.toLocaleString('tr-TR')}â‚º</span></div>
-                <div className="flex justify-between text-amber-100/80"><span>Kargo</span><span>{shippingCost === 0 ? <span className="text-emerald-400">Bedava</span> : shippingCost.toLocaleString('tr-TR') + 'â‚º'}</span></div>
-                {extraFee > 0 && <div className="flex justify-between text-amber-100/80"><span>KapÄ±da Ã–d. Ãœcreti</span><span>{extraFee}â‚º</span></div>}
+                <div className="flex justify-between text-amber-100/80"><span>Ara Toplam</span><span>{subtotal.toLocaleString('tr-TR')}₺</span></div>
+                <div className="flex justify-between text-amber-100/80"><span>Kargo</span><span>{shippingCost === 0 ? <span className="text-emerald-400">Bedava</span> : shippingCost.toLocaleString('tr-TR') + '₺'}</span></div>
+                {extraFee > 0 && <div className="flex justify-between text-amber-100/80"><span>Kapıda Öd. Ücreti</span><span>{extraFee}₺</span></div>}
                 <div className="flex justify-between font-serif text-xl pt-3 border-t border-amber-500/10">
                   <span className="text-amber-100">Toplam</span>
-                  <span className="text-amber-400">{grandTotal.toLocaleString('tr-TR')}â‚º</span>
+                  <span className="text-amber-400">{grandTotal.toLocaleString('tr-TR')}₺</span>
                 </div>
               </div>
               <div className="mt-5 flex items-center gap-2 text-xs text-amber-100/50">
-                <Shield size={14} className="text-amber-500"/> 256-bit SSL ile gÃ¼venli Ã¶deme
+                <Shield size={14} className="text-amber-500"/> 256-bit SSL ile güvenli ödeme
               </div>
             </div>
           </aside>
@@ -258,7 +258,7 @@ function AddressStep({ user, addresses, selectedAddrId, setSelectedAddrId, showN
   return (
     <div>
       <h2 className="font-serif text-2xl text-amber-50 mb-2 flex items-center gap-2"><MapPin className="text-amber-500"/> Teslimat Adresi</h2>
-      <p className="text-amber-100/50 text-sm mb-6">Siparisinizin gÃ¶nderileceÄŸi adresi seÃ§in.</p>
+      <p className="text-amber-100/50 text-sm mb-6">Siparisinizin gönderileceği adresi seçin.</p>
       {user && addresses.length > 0 && !showNewAddr && (
         <div className="space-y-3">
           {addresses.map((a) => (
@@ -270,7 +270,7 @@ function AddressStep({ user, addresses, selectedAddrId, setSelectedAddrId, showN
                     <h3 className="font-serif text-amber-100">{a.title}</h3>
                     {a.isDefault && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">VARSAYILAN</span>}
                   </div>
-                  <p className="text-sm text-amber-100/70 mt-1">{a.fullName} Â· {a.phone}</p>
+                  <p className="text-sm text-amber-100/70 mt-1">{a.fullName} · {a.phone}</p>
                   <p className="text-xs text-amber-100/60 mt-1">{a.addressLine}, {a.district} / {a.city} {a.zipCode}</p>
                 </div>
               </div>
@@ -283,20 +283,20 @@ function AddressStep({ user, addresses, selectedAddrId, setSelectedAddrId, showN
         <div>
           {!user && (
             <div className="bg-amber-500/5 border border-amber-500/20 rounded p-4 mb-4 text-sm text-amber-100/80">
-              ğŸ‘‹ Misafir olarak devam ediyorsunuz. <Link href="/giris" className="text-amber-400 underline">GiriÅŸ yap</Link> veya satÄ±n alÄ±mdÄ±n sonra hesabÄ±nÄ±z otomatik oluÅŸturulabilir.
+              👋 Misafir olarak devam ediyorsunuz. <Link href="/giris" className="text-amber-400 underline">Giriş yap</Link> veya satın alımdın sonra hesabınız otomatik oluşturulabilir.
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2"><label className={label}>AD SOYAD</label><input value={guest.fullName} onChange={(e) => setGuest({ ...guest, fullName: e.target.value })} className={inp}/></div>
             {!user && <div><label className={label}>E-POSTA</label><input type="email" value={guest.email} onChange={(e) => setGuest({ ...guest, email: e.target.value })} className={inp}/></div>}
             <div><label className={label}>TELEFON</label><input value={guest.phone} onChange={(e) => setGuest({ ...guest, phone: e.target.value.replace(/[^0-9]/g, '') })} className={inp} type="tel" inputMode="numeric"/></div>
-            <div><label className={label}>Ä°L</label><input value={guest.city} onChange={(e) => setGuest({ ...guest, city: e.target.value })} className={inp}/></div>
-            <div><label className={label}>Ä°LÃ‡E</label><input value={guest.district} onChange={(e) => setGuest({ ...guest, district: e.target.value })} className={inp}/></div>
+            <div><label className={label}>İL</label><input value={guest.city} onChange={(e) => setGuest({ ...guest, city: e.target.value })} className={inp}/></div>
+            <div><label className={label}>İLÇE</label><input value={guest.district} onChange={(e) => setGuest({ ...guest, district: e.target.value })} className={inp}/></div>
             <div><label className={label}>POSTA KODU</label><input value={guest.zipCode} onChange={(e) => setGuest({ ...guest, zipCode: e.target.value })} className={inp}/></div>
             <div className="col-span-2"><label className={label}>ADRES</label><textarea rows={3} value={guest.addressLine} onChange={(e) => setGuest({ ...guest, addressLine: e.target.value })} className={inp}/></div>
           </div>
           {user && addresses.length > 0 && (
-            <button onClick={() => setShowNewAddr(false)} className="mt-4 text-sm text-amber-400 hover:underline">â† KayÄ±tlÄ± adreslere dÃ¶n</button>
+            <button onClick={() => setShowNewAddr(false)} className="mt-4 text-sm text-amber-400 hover:underline">← Kayıtlı adreslere dön</button>
           )}
         </div>
       )}
@@ -307,8 +307,8 @@ function AddressStep({ user, addresses, selectedAddrId, setSelectedAddrId, showN
 function ShippingStep({ value, onChange, subtotal }) {
   return (
     <div>
-      <h2 className="font-serif text-2xl text-amber-50 mb-2 flex items-center gap-2"><Truck className="text-amber-500"/> Teslimat YÃ¶ntemi</h2>
-      <p className="text-amber-100/50 text-sm mb-6">Kargo seÃ§eneÄŸini seÃ§in.</p>
+      <h2 className="font-serif text-2xl text-amber-50 mb-2 flex items-center gap-2"><Truck className="text-amber-500"/> Teslimat Yöntemi</h2>
+      <p className="text-amber-100/50 text-sm mb-6">Kargo seçeneğini seçin.</p>
       <div className="space-y-3">
         {SHIPPING_METHODS.map((m) => {
           const isFree = m.freeOver && subtotal >= m.freeOver;
@@ -319,10 +319,10 @@ function ShippingStep({ value, onChange, subtotal }) {
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <h3 className="font-serif text-amber-100">{m.label}</h3>
-                    <span className="font-serif text-amber-400">{isFree || m.price === 0 ? <span className="text-emerald-400 text-sm">{m.price === 0 ? 'Ãœcretsiz' : 'Bedava'}</span> : m.price.toLocaleString('tr-TR') + 'â‚º'}</span>
+                    <span className="font-serif text-amber-400">{isFree || m.price === 0 ? <span className="text-emerald-400 text-sm">{m.price === 0 ? 'Ücretsiz' : 'Bedava'}</span> : m.price.toLocaleString('tr-TR') + '₺'}</span>
                   </div>
                   <p className="text-sm text-amber-100/60 mt-1">{m.desc}</p>
-                  {m.freeOver && !isFree && <p className="text-xs text-amber-400/70 mt-1">{m.freeOver.toLocaleString('tr-TR')}â‚º ve Ã¼zeri alÄ±ÅŸveriÅŸlerde bedava!</p>}
+                  {m.freeOver && !isFree && <p className="text-xs text-amber-400/70 mt-1">{m.freeOver.toLocaleString('tr-TR')}₺ ve üzeri alışverişlerde bedava!</p>}
                 </div>
               </div>
             </label>
@@ -336,14 +336,14 @@ function ShippingStep({ value, onChange, subtotal }) {
 function PaymentStep({ value, onChange }) {
   return (
     <div>
-      <h2 className="font-serif text-2xl text-amber-50 mb-2 flex items-center gap-2"><CreditCard className="text-amber-500"/> Ã–deme YÃ¶ntemi</h2>
-      <p className="text-amber-100/50 text-sm mb-6">GÃ¼venli Ã¶deme seÃ§eneÄŸinizi seÃ§in.</p>
+      <h2 className="font-serif text-2xl text-amber-50 mb-2 flex items-center gap-2"><CreditCard className="text-amber-500"/> Ödeme Yöntemi</h2>
+      <p className="text-amber-100/50 text-sm mb-6">Güvenli ödeme seçeneğinizi seçin.</p>
       <div className="space-y-3">
         {PAYMENT_METHODS.map((m) => {
           const Icon = m.icon;
           return (
             <label key={m.id} className={`block cursor-pointer border rounded-lg p-4 transition relative ${value === m.id ? 'border-amber-500 bg-amber-500/5' : 'border-amber-500/20 hover:border-amber-500/40'}`}>
-              {m.recommended && <span className="absolute -top-2 right-3 bg-amber-500 text-black text-[10px] font-bold tracking-widest px-2 py-0.5 rounded">ONERÄ°LEN</span>}
+              {m.recommended && <span className="absolute -top-2 right-3 bg-amber-500 text-black text-[10px] font-bold tracking-widest px-2 py-0.5 rounded">ONERİLEN</span>}
               <div className="flex items-start gap-3">
                 <input type="radio" name="pay" checked={value === m.id} onChange={() => onChange(m.id)} className="mt-1 accent-amber-500"/>
                 <Icon className="text-amber-500 mt-0.5" size={22}/>
@@ -353,7 +353,7 @@ function PaymentStep({ value, onChange }) {
                     {m.mock && <span className="text-[10px] bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded">TEST MODU</span>}
                   </h3>
                   <p className="text-sm text-amber-100/60 mt-1">{m.desc}</p>
-                  {m.extraFee && <p className="text-xs text-amber-400 mt-1">+{m.extraFee}â‚º ek hizmet bedeli</p>}
+                  {m.extraFee && <p className="text-xs text-amber-400 mt-1">+{m.extraFee}₺ ek hizmet bedeli</p>}
                 </div>
               </div>
             </label>
@@ -362,7 +362,7 @@ function PaymentStep({ value, onChange }) {
       </div>
       <div className="mt-5 flex items-center gap-3 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded text-sm text-amber-100/80">
         <Shield className="text-emerald-400 shrink-0" size={20}/>
-        TÃ¼m Ã¶demeleriniz 3D Secure ile korunur. Kart bilgileriniz sunucularÄ±mÄ±zda saklanmaz.
+        Tüm ödemeleriniz 3D Secure ile korunur. Kart bilgileriniz sunucularımızda saklanmaz.
       </div>
     </div>
   );
@@ -376,7 +376,7 @@ function ReviewStep({ items, customer, address, shippingMethod, paymentMethod, a
 
       <div className="space-y-4">
         <SummaryCard icon={MapPin} title="Teslimat Adresi">
-          <p className="text-amber-100">{address.fullName} Â· {address.phone}</p>
+          <p className="text-amber-100">{address.fullName} · {address.phone}</p>
           <p className="text-amber-100/70 text-sm mt-1">{address.addressLine}</p>
           <p className="text-amber-100/70 text-sm">{address.district} / {address.city} {address.zipCode}</p>
         </SummaryCard>
@@ -384,20 +384,20 @@ function ReviewStep({ items, customer, address, shippingMethod, paymentMethod, a
           <p className="text-amber-100">{shippingMethod?.label}</p>
           <p className="text-amber-100/60 text-sm">{shippingMethod?.desc}</p>
         </SummaryCard>
-        <SummaryCard icon={CreditCard} title="Ã–deme">
+        <SummaryCard icon={CreditCard} title="Ödeme">
           <p className="text-amber-100">{paymentMethod?.label}</p>
-          {paymentMethod?.mock && <p className="text-orange-300 text-xs mt-1">âš ï¸ Test modu - gerÃ§ek Ã¶deme yapÄ±lmaz</p>}
+          {paymentMethod?.mock && <p className="text-orange-300 text-xs mt-1">⚠️ Test modu - gerçek ödeme yapılmaz</p>}
         </SummaryCard>
       </div>
 
       <div className="mt-6 space-y-3 p-5 bg-black/30 border border-amber-500/10 rounded-lg">
         <label className="flex items-start gap-3 cursor-pointer">
           <input type="checkbox" checked={agreeContract} onChange={(e) => setAgreeContract(e.target.checked)} className="mt-1 w-4 h-4 accent-amber-500"/>
-          <span className="text-sm text-amber-100/80"><Link href="/mesafeli-satis" className="text-amber-400 underline">Mesafeli SatÄ±ÅŸ SÃ¶zleÅŸmesi</Link>â€™ni okudum ve kabul ediyorum.</span>
+          <span className="text-sm text-amber-100/80"><Link href="/mesafeli-satis" className="text-amber-400 underline">Mesafeli Satış Sözleşmesi</Link>’ni okudum ve kabul ediyorum.</span>
         </label>
         <label className="flex items-start gap-3 cursor-pointer">
           <input type="checkbox" checked={agreeKvkk} onChange={(e) => setAgreeKvkk(e.target.checked)} className="mt-1 w-4 h-4 accent-amber-500"/>
-          <span className="text-sm text-amber-100/80"><Link href="/kvkk" className="text-amber-400 underline">KVKK AydÄ±nlatma Metni</Link>â€™ni okudum.</span>
+          <span className="text-sm text-amber-100/80"><Link href="/kvkk" className="text-amber-400 underline">KVKK Aydınlatma Metni</Link>’ni okudum.</span>
         </label>
       </div>
     </div>
