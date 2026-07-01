@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -69,7 +69,7 @@ export default function CheckoutFlow() {
     });
   }, []);
 
-  if (!authChecked) return null;
+  if (!authChecked) return <main className="pt-32 min-h-screen text-center text-amber-100/50">Yükleniyor...</main>;
   if (items.length === 0) {
     return (
       <main className="pt-32 pb-20 min-h-screen">
