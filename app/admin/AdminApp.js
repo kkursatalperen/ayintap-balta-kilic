@@ -95,7 +95,7 @@ export default function AdminApp() {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto pt-14 lg:pt-0">
+      <main className="flex-1 overflow-y-auto pt-16 w-full min-h-screen">
         <AdminErrorBoundary key={tab}>
           {tab === 'dashboard' && <Dashboard/>}
           {tab === 'products' && <Products/>}
@@ -173,8 +173,8 @@ function Products() {
           <Plus size={18}/> YENİ ÜRÜN
         </button>
       </div>
-      <div className="bg-[#161616] border border-amber-500/10 rounded-lg overflow-hidden">
-        <table className="w-full">
+      <div className="bg-[#161616] border border-amber-500/10 rounded-lg overflow-x-auto">
+        <table className="w-full min-w-[700px]">
           <thead className="bg-black/30 border-b border-amber-500/10">
             <tr className="text-left text-xs text-amber-400 font-serif tracking-widest">
               <th className="p-4">GÖRSEL</th>
@@ -583,8 +583,8 @@ function Orders() {
   return (
     <div className="p-10">
       <h1 className="font-serif text-4xl text-amber-50 mb-6">Siparişler</h1>
-      <div className="bg-[#161616] border border-amber-500/10 rounded-lg overflow-hidden">
-        <table className="w-full">
+      <div className="bg-[#161616] border border-amber-500/10 rounded-lg overflow-x-auto">
+        <table className="w-full min-w-[700px]">
           <thead className="bg-black/30 border-b border-amber-500/10">
             <tr className="text-left text-xs text-amber-400 font-serif tracking-widest">
               <th className="p-4">SİPARİŞ NO</th><th className="p-4">TARİH</th><th className="p-4">ÜRÜN</th><th className="p-4">TUTAR</th><th className="p-4">DURUM</th><th className="p-4">KARGO</th><th className="p-4"></th>
