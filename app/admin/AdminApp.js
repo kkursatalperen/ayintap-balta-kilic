@@ -23,7 +23,7 @@ const SECTION_TYPES = [
 export default function AdminApp() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState('profile');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(true);
   
   const router = useRouter();
