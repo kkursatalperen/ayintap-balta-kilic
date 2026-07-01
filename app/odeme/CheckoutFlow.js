@@ -31,7 +31,8 @@ const PAYMENT_METHODS = [
 
 export default function CheckoutFlow() {
   const router = useRouter();
-  const { items, total, clear, _hasHydrated } = useCart();
+  const { items, total, clear } = useCart();
+  const [mounted, setMounted] = useState(false);
   const [step, setStep] = useState(1);
   const [authChecked, setAuthChecked] = useState(false);
   const [user, setUser] = useState(null);
@@ -69,7 +70,9 @@ export default function CheckoutFlow() {
     });
   }, []);
 
-  if (!_hasHydrated) return <main className="pt-32 min-h-screen text-center text-amber-100/50">Yükleniyor...</main>;
+  useEffect(() => { setMounted(true); }, []);
+
+  if (!mounted) return <main className="pt-32 min-h-screen text-center text-amber-100/50">Yükleniyor...</main>;
   if (!authChecked) return <main className="pt-32 min-h-screen text-center text-amber-100/50">YÃ¼kleniyor...</main>;
   if (items.length === 0) {
     return (
@@ -411,5 +414,6 @@ function SummaryCard({ icon: Icon, title, children }) {
     </div>
   );
 }
+
 
 
