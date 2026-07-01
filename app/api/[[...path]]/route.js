@@ -264,6 +264,14 @@ async function route(request, { params }) {
       statusHistory: [{ status: 'pending_payment', at: new Date(), note: 'Siparis olusturuldu' }],
       createdAt: new Date()
     };
+    // Stok otomatik düş
+    const productsCol = await getCollection('products');
+    for (const item of doc.items) {
+      await productsCol.updateOne(
+        { id: item.productId, stock: { $gte: item.qty } },
+        { $inc: { stock: -item.qty } }
+      );
+    }
     await col.insertOne(doc);
     // Send order confirmation email (best-effort, never blocks order)
     try {
