@@ -40,10 +40,30 @@ export default function AdminApp() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#0d0d0d] text-amber-100">Yükleniyor...</div>;
 
+ const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-[#0d0d0d] text-amber-50 flex">
+
+      {/* Mobil overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/60 z-20 lg:hidden" onClick={() => setSidebarOpen(false)}/>
+      )}
+
+      {/* Hamburger butonu */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="fixed top-4 left-4 z-30 lg:hidden bg-[#0a0a0a] border border-amber-500/30 text-amber-400 p-2 rounded"
+      >
+        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="3" y1="5" x2="17" y2="5"/>
+          <line x1="3" y1="10" x2="17" y2="10"/>
+          <line x1="3" y1="15" x2="17" y2="15"/>
+        </svg>
+      </button>
+
       {/* Sidebar */}
-      <aside className="w-64 bg-[#0a0a0a] border-r border-amber-500/20 flex flex-col">
+      <aside className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-[#0a0a0a] border-r border-amber-500/20 flex flex-col transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
         <div className="p-6 border-b border-amber-500/20">
           <Logo showText={true}/>
           <p className="text-xs text-amber-100/40 mt-3 tracking-widest">YÖNETİM PANELİ</p>
@@ -57,7 +77,7 @@ export default function AdminApp() {
             { id: 'blog', icon: FileText, label: 'Blog' },
             { id: 'settings', icon: Settings, label: 'Site Ayarları' },
           ].map((t) => (
-            <button key={t.id} onClick={() => setTab(t.id)}
+            <button key={t.id} onClick={() => { setTab(t.id); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-serif tracking-wider transition ${tab === t.id ? 'bg-amber-500/10 text-amber-400 border-l-2 border-amber-500' : 'text-amber-100/70 hover:bg-amber-500/5'}`}>
               <t.icon size={18}/> {t.label}
             </button>
@@ -66,14 +86,14 @@ export default function AdminApp() {
         <div className="p-4 border-t border-amber-500/20">
           <p className="text-xs text-amber-100/40">{user?.email}</p>
           <p className="text-xs text-amber-400 mb-3">{user?.role}</p>
-          <Link href="/" className="block text-center text-xs text-amber-100/60 mb-2 hover:text-amber-400">Siteyi Görüntüle</Link>
-          <button onClick={logout} className="w-full flex items-center justify-center gap-2 border border-red-500/40 text-red-400 py-2 rounded text-sm hover:bg-red-500/10">
+          <Link href="/" onClick={() => setSidebarOpen(false)} className="block text-center text-xs text-amber-100/60 mb-2 hover:text-amber-400">Siteyi Görüntüle</Link>
+          <button onClick={() => { setSidebarOpen(false); logout(); }} className="w-full flex items-center justify-center gap-2 border border-red-500/40 text-red-400 py-2 rounded text-sm hover:bg-red-500/10">
             <LogOut size={14}/> Çıkış Yap
           </button>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto pt-14 lg:pt-0">
         <AdminErrorBoundary key={tab}>
           {tab === 'dashboard' && <Dashboard/>}
           {tab === 'products' && <Products/>}
