@@ -34,10 +34,10 @@ async function route(request, { params }) {
   // ============ AUTH ============
   if (path === '/auth/register' && method === 'POST') {
     const { email, password, name, phone } = await readBody(request);
-    if (!email || !password) return err('Email ve şifre zorunlu', 400);
+    if (!email || !password) return err('Email ve ÅŸifre zorunlu', 400);
     const users = await getCollection('users');
     const existing = await users.findOne({ email: email.toLowerCase() });
-    if (existing) return err('Bu e-posta zaten kayıtlı', 409);
+    if (existing) return err('Bu e-posta zaten kayÄ±tlÄ±', 409);
     const hash = await hashPassword(password);
     const user = { id: uuid(), email: email.toLowerCase(), name: name || '', phone: phone || '', passwordHash: hash, role: 'customer', isActive: true, createdAt: new Date() };
     await users.insertOne(user);
@@ -51,9 +51,9 @@ async function route(request, { params }) {
     const { email, password } = await readBody(request);
     const users = await getCollection('users');
     const user = await users.findOne({ email: (email || '').toLowerCase() });
-    if (!user) return err('Kullanıcı bulunamadı', 404);
+    if (!user) return err('KullanÄ±cÄ± bulunamadÄ±', 404);
     const ok = await comparePassword(password, user.passwordHash);
-    if (!ok) return err('Şifre hatalı', 401);
+    if (!ok) return err('Åifre hatalÄ±', 401);
     const token = signToken({ id: user.id, role: user.role });
     const safe = { id: user.id, email: user.email, name: user.name, phone: user.phone, role: user.role };
     const res = json({ user: safe, token });
@@ -172,7 +172,7 @@ async function route(request, { params }) {
     const slug = path.split('/').pop();
     const col = await getCollection('products');
     const p = await col.findOne({ slug }, { projection: { _id: 0 } });
-    if (!p) return err('Ürün bulunamadı', 404);
+    if (!p) return err('ÃœrÃ¼n bulunamadÄ±', 404);
     return json({ product: p });
   }
   if (path === '/admin/products' && method === 'POST') {
@@ -543,7 +543,36 @@ async function route(request, { params }) {
     return json({ orderCount, productCount, userCount, totalSales: totalSales[0]?.sum || 0 });
   }
 
-  return err('Endpoint bulunamadı: ' + path, 404);
+
+  // ============ ADMIN USERS ============
+  if (path === '/admin/users' && method === 'GET') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const col = await getCollection('users');
+    const all = await col.find({}, { projection: { _id: 0, passwordHash: 0, resetToken: 0, resetExpires: 0, verifyToken: 0 } }).sort({ createdAt: -1 }).toArray();
+    return json({ users: all });
+  }
+  if (path.startsWith('/admin/users/') && method === 'PUT') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const id = path.split('/').pop();
+    const body = await readBody(request);
+    const allow = {};
+    if (body.role !== undefined) allow.role = body.role;
+    if (body.isActive !== undefined) allow.isActive = body.isActive;
+    const col = await getCollection('users');
+    await col.updateOne({ id }, { $set: { ...allow, updatedAt: new Date() } });
+    const u = await col.findOne({ id }, { projection: { _id: 0, passwordHash: 0 } });
+    return json({ user: u });
+  }
+  if (path.startsWith('/admin/users/') && method === 'DELETE') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const id = path.split('/').pop();
+    if (user.id === id) return err('Kendi hesabinizi silemezsiniz', 400);
+    const col = await getCollection('users');
+    await col.deleteOne({ id });
+    return json({ ok: true });
+  }
+
+  return err('Endpoint bulunamadÄ±: ' + path, 404);
   } catch (e) {
     console.error('[API ERROR]', path, method, e);
     return err('Sunucu hatasi olustu, lutfen tekrar deneyin', 500);
