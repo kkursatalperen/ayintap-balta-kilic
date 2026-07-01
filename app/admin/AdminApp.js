@@ -47,13 +47,13 @@ export default function AdminApp() {
 
       {/* Mobil overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/60 z-20 lg:hidden" onClick={() => setSidebarOpen(false)}/>
+        <div className="fixed inset-0 bg-black/60 z-20" onClick={() => setSidebarOpen(false)}/>
       )}
 
       {/* Hamburger butonu */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed top-4 left-4 z-30 lg:hidden bg-[#0a0a0a] border border-amber-500/30 text-amber-400 p-2 rounded"
+        className="fixed top-4 left-4 z-20 bg-[#0a0a0a] border border-amber-500/30 text-amber-400 p-2 rounded"
       >
         <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
           <line x1="3" y1="5" x2="17" y2="5"/>
@@ -63,7 +63,7 @@ export default function AdminApp() {
       </button>
 
       {/* Sidebar */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-[#0a0a0a] border-r border-amber-500/20 flex flex-col transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+      <aside className={`fixed inset-y-0 left-0 z-30 w-64 bg-[#0a0a0a] border-r border-amber-500/20 flex flex-col transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6 border-b border-amber-500/20">
           <Logo showText={true}/>
           <p className="text-xs text-amber-100/40 mt-3 tracking-widest">YÖNETİM PANELİ</p>
