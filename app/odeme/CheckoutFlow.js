@@ -103,7 +103,8 @@ export default function CheckoutFlow() {
   const canProceed = () => {
     if (step === 1) {
       if (user && selectedAddrId && !showNewAddr) return true;
-      return guest.fullName && guest.email && guest.phone && guest.city && guest.district && guest.addressLine;
+      const emailOk = !user ? !!guest.email : true;
+return !!(guest.fullName && emailOk && guest.phone && guest.city && guest.district && guest.addressLine);
     }
     if (step === 2) return !!shippingMethod;
     if (step === 3) return !!paymentMethod;
