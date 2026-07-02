@@ -104,7 +104,9 @@ export default function CheckoutFlow() {
     if (step === 1) {
       if (user && selectedAddrId && !showNewAddr) return true;
       const emailOk = !user ? !!guest.email : true;
-return !!(guest.fullName && emailOk && guest.phone && guest.city && guest.district && guest.addressLine);
+const emailValid = !user ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guest.email) : true;
+const phoneValid = guest.phone.length >= 10 && guest.phone.length <= 11;
+return !!(guest.fullName && emailValid && phoneValid && guest.city && guest.district && guest.addressLine);
     }
     if (step === 2) return !!shippingMethod;
     if (step === 3) return !!paymentMethod;
