@@ -115,6 +115,20 @@ return !!(guest.fullName && emailValid && phoneValid && guest.city && guest.dist
   };
 
   const next = async () => {
+    if (step === 1) {
+      if (!user && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guest.email)) {
+        toast.error('Geçerli bir e-posta adresi girin (örn: ad@gmail.com)');
+        return;
+      }
+      if (guest.phone.length < 10 || guest.phone.length > 11) {
+        toast.error('Telefon numarası 10 veya 11 haneli olmalıdır');
+        return;
+      }
+      if (!guest.fullName) { toast.error('Ad Soyad alanı boş bırakılamaz'); return; }
+      if (!guest.city) { toast.error('İl alanı boş bırakılamaz'); return; }
+      if (!guest.district) { toast.error('İlçe alanı boş bırakılamaz'); return; }
+      if (!guest.addressLine) { toast.error('Adres alanı boş bırakılamaz'); return; }
+    }
     if (!canProceed()) { toast.error('Lütfen gerekli alanları doldurun'); return; }
     if (step === 1 && user && showNewAddr && guest.addressLine) {
       // Save new address for logged user
@@ -211,7 +225,7 @@ return !!(guest.fullName && emailValid && phoneValid && guest.city && guest.dist
               <button onClick={() => step > 1 ? setStep(step - 1) : router.push('/sepet')} className="border border-amber-500/30 text-amber-100 px-5 py-3 rounded font-serif tracking-widest hover:bg-amber-500/5 transition flex items-center gap-2">
                 <ChevronLeft size={18}/> {step > 1 ? 'GERİ' : 'SEPETE DÖN'}
               </button>
-              <button onClick={next} disabled={!canProceed() || placing} className="bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-6 py-3 rounded font-serif tracking-widest hover:from-amber-400 hover:to-amber-500 transition disabled:opacity-50 flex items-center gap-2">
+              <button onClick={next} disabled={placing} className="bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-6 py-3 rounded font-serif tracking-widest hover:from-amber-400 hover:to-amber-500 transition disabled:opacity-50 flex items-center gap-2">
                 {placing ? 'İşLENİYOR...' : step < 4 ? (<>DEVAM ET <ChevronRight size={18}/></>) : (<>SİPARİŞİ TAMAMLA <Lock size={16}/></>)}
               </button>
             </div>
