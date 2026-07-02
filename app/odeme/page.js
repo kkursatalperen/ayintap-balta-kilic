@@ -1,6 +1,8 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import CheckoutFlow from './CheckoutFlow';
+import dynamic from 'next/dynamic';
+
+const CheckoutFlow = dynamic(() => import('./CheckoutFlow'), { ssr: false });
 
 async function getSettings() {
   const base = process.env.NEXT_PUBLIC_BASE_URL || '';
