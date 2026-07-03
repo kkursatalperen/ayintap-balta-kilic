@@ -120,32 +120,24 @@ export default function Header({ settings }) {
     </>
   );
 function AnnouncementBar({ announcements }) {
-  const [current, setCurrent] = useState(0);
-  const [sliding, setSliding] = useState(false);
-
-  useEffect(() => {
-    if (!announcements?.length) return;
-    const timer = setInterval(() => {
-      setSliding(true);
-      setTimeout(() => {
-        setCurrent(prev => (prev + 1) % announcements.length);
-        setSliding(false);
-      }, 400);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [announcements]);
-
   if (!announcements?.length) return null;
 
+  const text = announcements.join('   ✦   ');
+
   return (
-    <div className="fixed top-0 left-0 right-0 z-[51] bg-amber-500 text-black text-xs font-serif tracking-widest text-center py-2 overflow-hidden">
+    <div className="fixed top-0 left-0 right-0 z-[51] bg-amber-500 text-black text-xs font-serif tracking-widest py-2 overflow-hidden whitespace-nowrap">
       <div style={{
-        transition: 'all 0.4s ease',
-        opacity: sliding ? 0 : 1,
-        transform: sliding ? 'translateX(-100%)' : 'translateX(0)',
+        display: 'inline-block',
+        animation: 'marquee 20s linear infinite',
       }}>
-        {announcements[current]}
+        {text}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{text}
       </div>
+      <style>{`
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+      `}</style>
     </div>
   );
 }
