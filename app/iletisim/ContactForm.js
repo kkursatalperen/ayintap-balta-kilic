@@ -6,13 +6,8 @@ import { Send } from 'lucide-react';
 const inp = "w-full bg-black/40 border border-amber-500/30 rounded px-4 py-3 text-amber-50 focus:outline-none focus:border-amber-500 text-sm placeholder:text-amber-100/30";
 
 const SUBJECTS = [
-  'Sipariş Hakkında',
-  'Ürün Bilgisi',
-  'İade / Değişim',
-  'Kargo ve Teslimat',
-  'Özel Üretim Talebi',
-  'Öneri / Görüş',
-  'Diğer',
+  'Sipariş Hakkında', 'Ürün Bilgisi', 'İade / Değişim', 
+  'Kargo ve Teslimat', 'Özel Üretim Talebi', 'Öneri / Görüş', 'Diğer'
 ];
 
 export default function ContactForm() {
@@ -20,56 +15,34 @@ export default function ContactForm() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
-  const send = async () => {
-    if (!form.name || !form.email || !form.message) { toast.error('Ad, e-posta ve mesaj zorunludur'); return; }
-    setSending(true);
-    try {
-      const res = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-      if (res.ok) { setSent(true); toast.success('Mesajınız iletildi, en kısa sürede dönüş yapacağız.'); }
-      else { const d = await res.json(); toast.error(d.error || 'Bir hata oluştu'); }
-    } catch { toast.error('Bağlantı hatası, lütfen tekrar deneyin'); }
-    setSending(false);
+  const validateEmail = (email) => {
+    return String(email).toLowerCase().match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
   };
 
-  if (sent) return (
-    <div className="bg-[#161616] border border-amber-500/20 rounded-lg p-10 flex flex-col items-center justify-center text-center h-full min-h-[400px]">
-      <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mb-6">
-        <Send className="text-amber-500" size={28}/>
-      </div>
-      <h3 className="font-serif text-2xl text-amber-50 mb-3">Mesajınız Alındı</h3>
-      <p className="text-amber-100/60 max-w-sm">Ekibimiz en kısa sürede sizinle iletişime geçecektir.</p>
-      <button onClick={() => { setSent(false); setForm({ name: '', email: '', subject: '', message: '' }); }} className="mt-8 border border-amber-500/40 text-amber-400 px-6 py-2 rounded font-serif tracking-widest text-sm hover:bg-amber-500/10
-$form = @'
-'use client';
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { Send } from 'lucide-react';
-
-const inp = "w-full bg-black/40 border border-amber-500/30 rounded px-4 py-3 text-amber-50 focus:outline-none focus:border-amber-500 text-sm placeholder:text-amber-100/30";
-
-const SUBJECTS = [
-  'Sipariş Hakkında',
-  'Ürün Bilgisi',
-  'İade / Değişim',
-  'Kargo ve Teslimat',
-  'Özel Üretim Talebi',
-  'Öneri / Görüş',
-  'Diğer',
-];
-
-export default function ContactForm() {
-  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
-
   const send = async () => {
-    if (!form.name || !form.email || !form.message) { toast.error('Ad, e-posta ve mesaj zorunludur'); return; }
+    // Validasyonlar
+    if (form.name.trim().length < 3) { toast.error('Lütfen geçerli bir ad soyad girin.'); return; }
+    if (!validateEmail(form.email)) { toast.error('Lütfen geçerli bir e-posta adresi girin.'); return; }
+    if (form.message.trim().length < 10) { toast.error('Mesajınız en az 10 karakter olmalıdır.'); return; }
+
     setSending(true);
     try {
-      const res = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-      if (res.ok) { setSent(true); toast.success('Mesajınız iletildi, en kısa sürede dönüş yapacağız.'); }
-      else { const d = await res.json(); toast.error(d.error || 'Bir hata oluştu'); }
-    } catch { toast.error('Bağlantı hatası, lütfen tekrar deneyin'); }
+      const res = await fetch('/api/contact', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify(form) 
+      });
+      
+      if (res.ok) { 
+        setSent(true); 
+        toast.success('Mesajınız iletildi, en kısa sürede dönüş yapacağız.'); 
+      } else { 
+        const d = await res.json(); 
+        toast.error(d.error || 'Bir hata oluştu'); 
+      }
+    } catch { 
+      toast.error('Bağlantı hatası, lütfen tekrar deneyin'); 
+    }
     setSending(false);
   };
 
