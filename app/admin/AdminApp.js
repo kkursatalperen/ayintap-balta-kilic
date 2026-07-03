@@ -557,6 +557,7 @@ function SectionEditor({ section, onClose }) {
         <div className="space-y-3">
           <Field label="Başlık"><input className={inp} value={data.title || ''} onChange={(e) => setData({ ...data, title: e.target.value })}/></Field>
           <Field label="Alt Yazı"><input className={inp} value={data.subtitle || ''} onChange={(e) => setData({ ...data, subtitle: e.target.value })}/></Field>
+          <Field label="Instagram URL"><input className={inp} placeholder="https://instagram.com/ayintapbaltakilic" value={data.instagramUrl || ''} onChange={(e) => setData({ ...data, instagramUrl: e.target.value })}/></Field>
           <div className="space-y-2">
             {(data.items || []).map((it, i) => (
               <div key={i} className="bg-black/30 border border-amber-500/10 rounded p-3 space-y-2">
