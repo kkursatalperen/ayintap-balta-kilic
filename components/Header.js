@@ -50,8 +50,12 @@ export default function Header({ settings }) {
   };
 
   return (
-    <>
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-[#0d0d0d]/95 backdrop-blur-md border-b border-amber-500/20' : 'bg-gradient-to-b from-black/80 to-transparent'}`}>
+    <><AnnouncementBar announcements={settings?.announcements || [
+  '🚚 500₺ ve üzeri alışverişlerde ücretsiz kargo',
+  '⚔️ El yapımı, sertifikalı Türk çeliği',
+  '✨ Lazerle isim yazdırma seçeneği mevcut',
+]}/>
+      <header className={`fixed top-8 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-[#0d0d0d]/95 backdrop-blur-md border-b border-amber-500/20' : 'bg-gradient-to-b from-black/80 to-transparent'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             <Link href="/" className="flex items-center">
@@ -114,4 +118,26 @@ export default function Header({ settings }) {
       <CartDrawer settings={settings}/>
     </>
   );
+function AnnouncementBar({ announcements }) {
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    if (!announcements?.length) return;
+    const timer = setInterval(() => {
+      setCurrent(prev => (prev + 1) % announcements.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [announcements]);
+
+  if (!announcements?.length) return null;
+
+  return (
+    <div className="fixed top-0 left-0 right-0 z-[51] bg-amber-500 text-black text-xs font-serif tracking-widest text-center py-2 overflow-hidden">
+      <div className="transition-all duration-500">
+        {announcements[current]}
+      </div>
+    </div>
+  );
 }
+}
+
