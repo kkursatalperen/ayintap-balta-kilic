@@ -9,43 +9,69 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
+
   const submit = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     setLoading(true);
-    const res = await fetch('/api/auth/forgot-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
-    if (res.ok) { setDone(true); toast.success('Eposta gonderildi (mock - konsola bakin)'); }
+    const res = await fetch('/api/auth/forgot-password', { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({ email }) 
+    });
+    
+    if (res.ok) { 
+      setDone(true); 
+      toast.success('E-posta gönderildi.'); 
+    } else {
+      toast.error('Bir hata oluştu, tekrar deneyin.');
+    }
     setLoading(false);
   };
+
   return (
     <>
-      <Header settings={{}}/>
+      <Header settings={{}} />
       <main className="pt-32 pb-20 min-h-screen flex items-center justify-center px-6">
         <div className="w-full max-w-md">
           <div className="bg-[#161616] border border-amber-500/20 rounded-lg p-8">
             <div className="text-center mb-6">
-              <Shield className="text-amber-500 mx-auto mb-3" size={36}/>
-              <h1 style="...">Şifremi Unuttum</h1>
-              <p>E-posta adresinizi girin, şifre sıfırlama bağlantısı gönderelim.</p>
+              <Shield className="text-amber-500 mx-auto mb-3" size={36} />
+              <h1 className="text-2xl font-serif text-amber-500 mb-2">Şifremi Unuttum</h1>
+              <p className="text-amber-100/70">E-posta adresinizi girin, şifre sıfırlama bağlantısı gönderelim.</p>
             </div>
+            
             {done ? (
               <div className="text-center text-amber-100/80">
-                {/* Başarılı mesajı */}
-<p>Eğer bu e-posta kayıtlıysa, şifre sıfırlama bağlantısı gönderildi.</p>
-{/* "Tekrar Gönder" Butonu */}
-<button onClick={handleResend} style={{ color: BRAND.gold, background: 'none', border: 'none', cursor: 'pointer' }}>
-  Bağlantı gelmediyse tekrar gönder
-</button>
+                <p className="mb-4">Eğer bu e-posta kayıtlıysa, şifre sıfırlama bağlantısı gönderildi.</p>
+                <button 
+                  onClick={submit} 
+                  disabled={loading}
+                  className="text-amber-500 hover:text-amber-400 underline text-sm transition-colors"
+                >
+                  {loading ? 'Gönderiliyor...' : 'Bağlantı gelmediyse tekrar gönder'}
+                </button>
               </div>
-              
             ) : (
               <form onSubmit={submit} className="space-y-4">
-                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-posta" className="w-full bg-black/40 border border-amber-500/30 rounded px-4 py-3 text-amber-50 focus:outline-none focus:border-amber-500"/>
-                <button disabled={loading} className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold py-3 rounded font-serif tracking-widest">
-                  {loading ? 'GONDERILIYOR...' : 'BAGLANTI GONDER'}
+                <input 
+                  type="email" 
+                  required 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  placeholder="E-posta" 
+                  className="w-full bg-black/40 border border-amber-500/30 rounded px-4 py-3 text-amber-50 focus:outline-none focus:border-amber-500"
+                />
+                <button 
+                  disabled={loading} 
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold py-3 rounded font-serif tracking-widest hover:opacity-90 transition-opacity"
+                >
+                  {loading ? 'GÖNDERİLİYOR...' : 'BAĞLANTI GÖNDER'}
                 </button>
               </form>
             )}
-            <Link href="/giris" className="block text-center mt-6 text-amber-400 text-sm hover:underline">Girise don</Link>
+            <Link href="/giris" className="block text-center mt-6 text-amber-400 text-sm hover:underline">
+              Girişe dön
+            </Link>
           </div>
         </div>
       </main>
