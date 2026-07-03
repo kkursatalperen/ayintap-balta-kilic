@@ -50,7 +50,8 @@ export default function Header({ settings }) {
   };
 
   return (
-    <><AnnouncementBar announcements={settings?.announcements || [
+    <>
+    <AnnouncementBar announcements={settings?.announcements || [
   '🚚 500₺ ve üzeri alışverişlerde ücretsiz kargo',
   '⚔️ El yapımı, sertifikalı Türk çeliği',
   '✨ Lazerle isim yazdırma seçeneği mevcut',
@@ -120,11 +121,16 @@ export default function Header({ settings }) {
   );
 function AnnouncementBar({ announcements }) {
   const [current, setCurrent] = useState(0);
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     if (!announcements?.length) return;
     const timer = setInterval(() => {
-      setCurrent(prev => (prev + 1) % announcements.length);
+      setVisible(false);
+      setTimeout(() => {
+        setCurrent(prev => (prev + 1) % announcements.length);
+        setVisible(true);
+      }, 400);
     }, 3000);
     return () => clearInterval(timer);
   }, [announcements]);
@@ -133,7 +139,11 @@ function AnnouncementBar({ announcements }) {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[51] bg-amber-500 text-black text-xs font-serif tracking-widest text-center py-2 overflow-hidden">
-      <div className="transition-all duration-500">
+      <div style={{
+        transition: 'all 0.4s ease',
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(-10px)',
+      }}>
         {announcements[current]}
       </div>
     </div>
