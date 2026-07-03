@@ -1,7 +1,7 @@
-'use client';
+﻿'use client';
 import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
-import { Menu, ShoppingCart, User, Search, X, ChevronDown, LayoutDashboard, Package, Heart, MapPin, LogOut, Settings } from 'lucide-react';
+import { Menu, ShoppingCart, User, X, ChevronDown, LayoutDashboard, Package, Heart, MapPin, LogOut, Settings } from 'lucide-react';
 import Logo from './Logo';
 import { useCart, useAuth } from '@/lib/store';
 import CartDrawer from './CartDrawer';
@@ -11,13 +11,13 @@ export default function Header({ settings }) {
   const open = useCart((s) => s.open);
   const { user, setUser, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [categories, setCategories] = useState([]);
-  const [catOpen, setCatOpen] = useState(false);
-  const catRef = useRef(null);
-  const catTimer = useRef(null);
   const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [catOpen, setCatOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
   const dropdownRef = useRef(null);
+  const catRef = useRef(null);
+  const catTimer = useRef(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -32,13 +32,11 @@ export default function Header({ settings }) {
   useEffect(() => {
     fetch('/api/categories').then(r => r.json()).then(d => setCategories(d.categories || [])).catch(() => {});
   }, []);
-  }, [setUser]);
 
   useEffect(() => {
     const handleClick = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setDropdownOpen(false);
-      }
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false);
+      if (catRef.current && !catRef.current.contains(e.target)) setCatOpen(false);
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
@@ -53,17 +51,15 @@ export default function Header({ settings }) {
 
   const nav = [
     { name: 'Anasayfa', href: '/' },
-    { name: 'Tüm Ürünler', href: '/urunler' },
-    { name: 'Koleksiyonlar', href: '/urunler?kategori=koleksiyon-eserleri' },
     { name: 'Blog', href: '/blog' },
     { name: 'Hikayemiz', href: '/hakkimizda' },
-    { name: 'İletişim', href: '/iletisim' },
+    { name: 'Iletisim', href: '/iletisim' },
   ];
 
   const menuItems = user ? [
     ...(user.role !== 'customer' ? [{ icon: LayoutDashboard, label: 'Admin Paneli', href: '/admin' }] : []),
     { icon: User, label: 'Profilim', href: '/profil' },
-    { icon: Package, label: 'Siparişlerim', href: '/profil?tab=orders' },
+    { icon: Package, label: 'Siparislerim', href: '/profil?tab=orders' },
     { icon: Heart, label: 'Favorilerim', href: '/profil?tab=favorites' },
     { icon: MapPin, label: 'Adreslerim', href: '/profil?tab=addresses' },
     { icon: Settings, label: 'Ayarlar', href: '/profil?tab=password' },
@@ -71,60 +67,51 @@ export default function Header({ settings }) {
 
   return (
     <>
-    <AnnouncementBar announcements={settings?.announcements || [
-  '🚚 500₺ ve üzeri alışverişlerde ücretsiz kargo',
-  '⚔️ El yapımı, sertifikalı Türk çeliği',
-  '✨ Lazerle isim yazdırma seçeneği mevcut',
-]}/>
       <header className={`fixed top-8 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-[#0d0d0d]/95 backdrop-blur-md border-b border-amber-500/20' : 'bg-gradient-to-b from-black/80 to-transparent'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             <Link href="/" className="flex items-center">
               <Logo showText={true} />
             </Link>
+
             <nav className="hidden lg:flex items-center gap-8">
-              {nav.map((item) =>
-                item.name === 'T�m �r�nler' ? (
-                  <div key={item.href} ref={catRef} className="relative"
-                    onMouseEnter={() => { clearTimeout(catTimer.current); setCatOpen(true); }}
-                    onMouseLeave={() => { catTimer.current = setTimeout(() => setCatOpen(false), 150); }}
-                  >
-                    <button onClick={() => setCatOpen(v => !v)} className="flex items-center gap-1 text-amber-100/80 hover:text-amber-400 transition-colors font-serif text-sm tracking-widest uppercase">
-                      {item.name}
-                      <ChevronDown size={14} className={`transition-transform duration-200 ${catOpen ? 'rotate-180' : ''}`}/>
-                    </button>
-                    {catOpen && (
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-56 bg-[#0d0d0d] border border-amber-500/20 rounded-lg shadow-2xl overflow-hidden z-50">
-                        <div className="p-2">
-                          <Link href="/urunler" onClick={() => setCatOpen(false)} className="block px-4 py-2.5 text-amber-100/80 hover:text-amber-400 hover:bg-amber-500/5 rounded font-serif text-sm tracking-widest uppercase transition-colors">T�m �r�nler</Link>
-                          {categories.length > 0 && <div className="my-2 border-t border-amber-500/10"/>}
-                          {categories.map((cat) => (
-                            <Link key={cat.id} href={`/urunler?kategori=${cat.slug}`} onClick={() => setCatOpen(false)} className="block px-4 py-2.5 text-amber-100/60 hover:text-amber-400 hover:bg-amber-500/5 rounded font-serif text-sm tracking-widest uppercase transition-colors">{cat.name}</Link>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+              <Link href="/" className="text-amber-100/80 hover:text-amber-400 transition-colors font-serif text-sm tracking-widest uppercase">Anasayfa</Link>
+
+              <div ref={catRef} className="relative"
+                onMouseEnter={() => { clearTimeout(catTimer.current); setCatOpen(true); }}
+                onMouseLeave={() => { catTimer.current = setTimeout(() => setCatOpen(false), 150); }}
+              >
+                <button onClick={() => setCatOpen(v => !v)} className="flex items-center gap-1 text-amber-100/80 hover:text-amber-400 transition-colors font-serif text-sm tracking-widest uppercase">
+                  Tum Urunler
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${catOpen ? 'rotate-180' : ''}`}/>
+                </button>
+                {catOpen && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-56 bg-[#0d0d0d] border border-amber-500/20 rounded-lg shadow-2xl overflow-hidden z-50">
+                    <div className="p-2">
+                      <Link href="/urunler" onClick={() => setCatOpen(false)} className="block px-4 py-2.5 text-amber-100/80 hover:text-amber-400 hover:bg-amber-500/5 rounded font-serif text-sm tracking-widest uppercase transition-colors">Tum Urunler</Link>
+                      {categories.length > 0 && <div className="my-2 border-t border-amber-500/10"/>}
+                      {categories.map((cat) => (
+                        <Link key={cat.id} href={`/urunler?kategori=${cat.slug}`} onClick={() => setCatOpen(false)} className="block px-4 py-2.5 text-amber-100/60 hover:text-amber-400 hover:bg-amber-500/5 rounded font-serif text-sm tracking-widest uppercase transition-colors">{cat.name}</Link>
+                      ))}
+                    </div>
                   </div>
-                ) : (
-                  <Link key={item.href} href={item.href} className="text-amber-100/80 hover:text-amber-400 transition-colors font-serif text-sm tracking-widest uppercase">
-                    {item.name}
-                  </Link>
-                )
-              )}
+                )}
+              </div>
+
+              <Link href="/blog" className="text-amber-100/80 hover:text-amber-400 transition-colors font-serif text-sm tracking-widest uppercase">Blog</Link>
+              <Link href="/hakkimizda" className="text-amber-100/80 hover:text-amber-400 transition-colors font-serif text-sm tracking-widest uppercase">Hikayemiz</Link>
+              <Link href="/iletisim" className="text-amber-100/80 hover:text-amber-400 transition-colors font-serif text-sm tracking-widest uppercase">Iletisim</Link>
             </nav>
+
             <div className="flex items-center gap-2 sm:gap-4">
               {user ? (
                 <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center gap-1.5 p-2 text-amber-100 hover:text-amber-400 transition"
-                  >
+                  <button onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center gap-1.5 p-2 text-amber-100 hover:text-amber-400 transition">
                     <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-xs font-bold text-black">
                       {(user.name || user.email || '?')[0].toUpperCase()}
                     </div>
                     <ChevronDown size={14} className={`transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}/>
                   </button>
-
                   {dropdownOpen && (
                     <div className="absolute right-0 top-full mt-2 w-56 bg-[#161616] border border-amber-500/20 rounded-lg shadow-2xl shadow-black/50 overflow-hidden z-50">
                       <div className="px-4 py-3 border-b border-amber-500/10">
@@ -133,24 +120,16 @@ export default function Header({ settings }) {
                       </div>
                       <div className="py-1">
                         {menuItems.map((item) => (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={() => setDropdownOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-amber-100/70 hover:text-amber-400 hover:bg-amber-500/5 transition text-sm font-serif tracking-wide"
-                          >
+                          <Link key={item.href} href={item.href} onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-amber-100/70 hover:text-amber-400 hover:bg-amber-500/5 transition text-sm font-serif tracking-wide">
                             <item.icon size={15} className="text-amber-500/70"/>
                             {item.label}
                           </Link>
                         ))}
                       </div>
                       <div className="border-t border-amber-500/10 py-1">
-                        <button
-                          onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-red-400 hover:bg-red-500/10 transition text-sm font-serif tracking-wide"
-                        >
+                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 text-red-400 hover:bg-red-500/10 transition text-sm font-serif tracking-wide">
                           <LogOut size={15}/>
-                          Çıkış Yap
+                          Cikis Yap
                         </button>
                       </div>
                     </div>
@@ -181,26 +160,28 @@ export default function Header({ settings }) {
             <Logo showText={true}/>
             <button onClick={() => setMobileOpen(false)} className="p-2 text-amber-100"><X size={24}/></button>
           </div>
-          <div className="flex flex-col p-6 gap-6">
-            {nav.map((item) => (
-              <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 pb-4">
-                {item.name}
-              </Link>
+          <div className="flex flex-col p-6 gap-2">
+            <Link href="/" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 pb-4 mb-2">Anasayfa</Link>
+            <Link href="/urunler" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider pb-2">Tum Urunler</Link>
+            {categories.map((cat) => (
+              <Link key={cat.id} href={`/urunler?kategori=${cat.slug}`} onClick={() => setMobileOpen(false)} className="text-amber-100/60 font-serif text-base tracking-wider pl-4 pb-2">{cat.name}</Link>
             ))}
+            <div className="border-b border-amber-500/10 my-2"/>
+            <Link href="/blog" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 pb-4">Blog</Link>
+            <Link href="/hakkimizda" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 pb-4">Hikayemiz</Link>
+            <Link href="/iletisim" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 pb-4">Iletisim</Link>
             {user && (
-              <>
-                <div className="border-t border-amber-500/20 pt-4">
-                  {menuItems.map((item) => (
-                    <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 text-amber-100/70 font-serif text-lg tracking-wider border-b border-amber-500/10 pb-4 mb-4">
-                      <item.icon size={18} className="text-amber-500"/>
-                      {item.label}
-                    </Link>
-                  ))}
-                  <button onClick={handleLogout} className="flex items-center gap-3 text-red-400 font-serif text-lg tracking-wider">
-                    <LogOut size={18}/> Çıkış Yap
-                  </button>
-                </div>
-              </>
+              <div className="border-t border-amber-500/20 pt-4 mt-2">
+                {menuItems.map((item) => (
+                  <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 text-amber-100/70 font-serif text-lg tracking-wider border-b border-amber-500/10 pb-4 mb-4">
+                    <item.icon size={18} className="text-amber-500"/>
+                    {item.label}
+                  </Link>
+                ))}
+                <button onClick={handleLogout} className="flex items-center gap-3 text-red-400 font-serif text-lg tracking-wider">
+                  <LogOut size={18}/> Cikis Yap
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -208,26 +189,4 @@ export default function Header({ settings }) {
       <CartDrawer settings={settings}/>
     </>
   );
-function AnnouncementBar({ announcements }) {
-  if (!announcements?.length) return null;
-
-  const text = announcements.join('          ✦          ');
-
-  return (
-    <div className="fixed top-0 left-0 right-0 z-[51] bg-amber-500 text-black text-xs font-serif tracking-widest py-2 overflow-hidden whitespace-nowrap">
-      <div style={{
-        display: 'inline-block',
-        animation: 'marquee 20s linear infinite',
-      }}>
-        {text}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{text}
-      </div>
-      <style>{`
-        @keyframes marquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-      `}</style>
-    </div>
-  );
-}
 }
