@@ -23,7 +23,7 @@ export default async function Page() {
         {/* Hero Bölümü */}
         <div className="relative h-[60vh] min-h-[400px] flex items-center justify-center overflow-hidden">
           <img
-            src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?crop=entropy&cs=srgb&fm=jpg&q=85"
+            src={s.about?.heroImage || "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?crop=entropy&cs=srgb&fm=jpg&q=85"}
             alt="Demirci Atölyesi"
             className="absolute inset-0 w-full h-full object-cover"
           />
@@ -35,7 +35,7 @@ export default async function Page() {
               <div className="h-px w-12 bg-amber-500"/>
             </div>
             <h1 className="font-serif text-5xl md:text-7xl text-amber-50">Hikayemiz</h1>
-            <p className="mt-4 text-amber-100/70 text-lg font-serif">Örsün üzerinde dövülen ataların mirası</p>
+            <p className="mt-4 text-amber-100/70 text-lg font-serif">{s.about?.heroSubtitle || 'Örsün üzerinde dövülen ataların mirası'}</p>
           </div>
         </div>
 
@@ -43,24 +43,16 @@ export default async function Page() {
         <div className="max-w-5xl mx-auto px-6 py-16">
           <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
             <div>
-              <h2 className="font-serif text-3xl text-amber-400 mb-6">Gaziantep'ten Dünyaya</h2>
+              <h2 className="font-serif text-3xl text-amber-400 mb-6">{s.about?.title || "Gaziantep'ten Dünyaya"}</h2>
               <div className="space-y-4 text-amber-100/80 leading-relaxed font-serif text-lg">
-                <p>
-                  Gaziantep'in eski adıyla Ayıntap topraklarında, dededen toruna aktarılan bir gelenek...
-                  Örsümüzün üzerinde dövülen her çelik, atalarımızın kor ateşinden bir miras taşır.
-                </p>
-                <p>
-                  Biz yalnızca silah değil; tarih dövüyoruz. Her kılıcın içinde bir destan,
-                  her baltanın sapında nesillerin teri ve emeği saklıdır.
-                </p>
-                <p>
-                  {s.footerAbout || 'Geleneksel Türk demircilik sanatını yaşatmak ve dünyaya tanıtmak için çalışıyoruz. Her eserimiz el yapımı, her biri benzersiz.'}
-                </p>
+                <p>{s.about?.paragraph1 || "Gaziantep'in eski adıyla Ayıntap topraklarında, dededen toruna aktarılan bir gelenek... Örsümüzün üzerinde dövülen her çelik, atalarımızın kor ateşinden bir miras taşır."}</p>
+                <p>{s.about?.paragraph2 || "Biz yalnızca silah değil; tarih dövüyoruz. Her kılıcın içinde bir destan, her baltanın sapında nesillerin teri ve emeği saklıdır."}</p>
+                <p>{s.footerAbout || 'Geleneksel Türk demircilik sanatını yaşatmak ve dünyaya tanıtmak için çalışıyoruz. Her eserimiz el yapımı, her biri benzersiz.'}</p>
               </div>
             </div>
             <div className="relative">
               <img
-                src="https://images.unsplash.com/photo-1566454544259-f4b94c3d758c?crop=entropy&cs=srgb&fm=jpg&q=85"
+                src={s.about?.sideImage || "https://images.unsplash.com/photo-1566454544259-f4b94c3d758c?crop=entropy&cs=srgb&fm=jpg&q=85"}
                 alt="Kılıç yapımı"
                 className="w-full h-80 object-cover rounded-lg border border-amber-500/20"
               />
@@ -97,22 +89,15 @@ export default async function Page() {
           <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
             <div className="relative order-2 md:order-1">
               <img
-                src="https://images.unsplash.com/photo-1528918652533-dfdb3f368093?crop=entropy&cs=srgb&fm=jpg&q=85"
+                src={s.about?.workshopImage || "https://images.unsplash.com/photo-1528918652533-dfdb3f368093?crop=entropy&cs=srgb&fm=jpg&q=85"}
                 alt="Kılıç koleksiyonu"
                 className="w-full h-80 object-cover rounded-lg border border-amber-500/20"
               />
             </div>
             <div className="order-1 md:order-2">
-              <h2 className="font-serif text-3xl text-amber-400 mb-6">Atölyemiz</h2>
+              <h2 className="font-serif text-3xl text-amber-400 mb-6">{s.about?.workshopTitle || 'Atölyemiz'}</h2>
               <div className="space-y-4 text-amber-100/80 leading-relaxed font-serif text-lg">
-                <p>
-                  Gaziantep'in kalbinde, geleneksel bir atölyede çalışıyoruz. Modern teknoloji ile
-                  geleneksel ustalığı birleştirerek, her müşterimize özel eserler üretiyoruz.
-                </p>
-                <p>
-                  Lazer kazıma teknolojimizle kılıçlarınıza isim, tarih veya özel mesajlar
-                  yazdırabilirsiniz. Her kılıç, sipariş verenin ruhunu taşır.
-                </p>
+                <p>{s.about?.workshopDesc || "Gaziantep'in kalbinde, geleneksel bir atölyede çalışıyoruz. Modern teknoloji ile geleneksel ustalığı birleştirerek, her müşterimize özel eserler üretiyoruz."}</p>
               </div>
             </div>
           </div>
