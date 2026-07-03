@@ -827,6 +827,7 @@ function BlogEditor({ post, onClose }) {
 function SiteSettings() {
   const [s, setS] = useState({});
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('genel');
   useEffect(() => { fetch('/api/settings').then(r => r.json()).then(d => setS(d.settings || {})); }, []);
   const save = async () => {
     setSaving(true);
@@ -837,7 +838,22 @@ function SiteSettings() {
     <div className="p-10 max-w-4xl">
       <h1 className="font-serif text-4xl text-amber-50 mb-2">Site Ayarları</h1>
       <p className="text-amber-100/50 mb-8">Genel marka ve iletişim bilgileri</p>
-      <div className="bg-[#161616] border border-amber-500/10 rounded-lg p-6 grid grid-cols-2 gap-5">
+
+      {/* Sekmeler */}
+      <div className="flex gap-2 mb-6">
+        {[
+          { id: 'genel', label: 'Genel' },
+          { id: 'hikaye', label: 'Hikayemiz' },
+          { id: 'duyurular', label: 'Duyurular' },
+        ].map((t) => (
+          <button key={t.id} onClick={() => setActiveTab(t.id)}
+            className={`px-4 py-2 rounded font-serif text-sm tracking-widest transition ${activeTab === t.id ? 'bg-amber-500 text-black' : 'border border-amber-500/30 text-amber-100/70 hover:bg-amber-500/10'}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'genel' && <div className="bg-[#161616] border border-amber-500/10 rounded-lg p-6 grid grid-cols-2 gap-5">
         <Field label="Marka Adı"><input className={inp} value={s.brandName || ''} onChange={(e) => setS({ ...s, brandName: e.target.value })}/></Field>
         <Field label="Slogan"><input className={inp} value={s.tagline || ''} onChange={(e) => setS({ ...s, tagline: e.target.value })}/></Field>
         <Field label="Telefon"><input className={inp} value={s.contactPhone || ''} onChange={(e) => setS({ ...s, contactPhone: e.target.value })}/></Field>
@@ -856,7 +872,42 @@ function SiteSettings() {
           <input type="checkbox" id="maintenance" checked={!!s.maintenanceMode} onChange={(e) => setS({ ...s, maintenanceMode: e.target.checked })} className="w-5 h-5 accent-amber-500"/>
           <label htmlFor="maintenance" className="text-amber-100">Bakım Modu</label>
         </div>
-      </div>
+      </div>}
+
+      {activeTab === 'hikaye' && <div className="bg-[#161616] border border-amber-500/10 rounded-lg p-6 space-y-5">
+        <Field label="Hero Görsel URL (üst kapak görseli)"><input className={inp} value={s.about?.heroImage || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), heroImage: e.target.value } })}/></Field>
+        <Field label="Hero Alt Başlık"><input className={inp} value={s.about?.heroSubtitle || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), heroSubtitle: e.target.value } })}/></Field>
+        <Field label="Ana Başlık"><input className={inp} value={s.about?.title || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), title: e.target.value } })}/></Field>
+        <Field label="1. Paragraf"><textarea rows={3} className={inp} value={s.about?.paragraph1 || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), paragraph1: e.target.value } })}/></Field>
+        <Field label="2. Paragraf"><textarea rows={3} className={inp} value={s.about?.paragraph2 || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), paragraph2: e.target.value } })}/></Field>
+        <Field label="Yan Görsel URL (sağdaki görsel)"><input className={inp} value={s.about?.sideImage || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), sideImage: e.target.value } })}/></Field>
+        <Field label="Atölye Başlığı"><input className={inp} value={s.about?.workshopTitle || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), workshopTitle: e.target.value } })}/></Field>
+        <Field label="Atölye Açıklaması"><textarea rows={3} className={inp} value={s.about?.workshopDesc || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), workshopDesc: e.target.value } })}/></Field>
+        <Field label="Atölye Görseli URL"><input className={inp} value={s.about?.workshopImage || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), workshopImage: e.target.value } })}/></Field>
+      </div>}
+
+      {activeTab === 'duyurular' && <div className="bg-[#161616] border border-amber-500/10 rounded-lg p-6 space-y-3">
+        <p className="text-xs text-amber-100/50 mb-4">Her satıra bir duyuru yaz. Üstteki duyuru çubuğunda kayarak gösterilir.</p>
+        {(s.announcements || ['', '', '']).map((ann, i) => (
+          <div key={i} className="flex gap-2">
+            <input className={inp} placeholder={`Duyuru ${i + 1}`} value={ann} onChange={(e) => {
+              const arr = [...(s.announcements || ['', '', ''])];
+              arr[i] = e.target.value;
+              setS({ ...s, announcements: arr });
+            }}/>
+            <button onClick={() => {
+              const arr = [...(s.announcements || [])];
+              arr.splice(i, 1);
+              setS({ ...s, announcements: arr });
+            }} className="text-red-500 px-2"><X size={16}/></button>
+          </div>
+        ))}
+        <button onClick={() => setS({ ...s, announcements: [...(s.announcements || []), ''] })}
+          className="w-full border-2 border-dashed border-amber-500/30 rounded py-2 text-amber-400 text-sm">
+          + Duyuru Ekle
+        </button>
+      </div>}
+
       <button onClick={save} disabled={saving} className="mt-6 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-8 py-3 rounded font-serif tracking-widest flex items-center gap-2">
         <Save size={18}/>{saving ? 'KAYDEDİLİYOR...' : 'AYARLARI KAYDET'}
       </button>
