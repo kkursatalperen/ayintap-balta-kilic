@@ -828,6 +828,28 @@ function SiteSettings() {
   const [s, setS] = useState({});
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('genel');
+  const uploadImage = async (cb) => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataUrl: reader.result, folder: 'homepage' })
+      });
+      const d = await res.json();
+      if (d.url) { cb(d.url); toast.success('Görsel yüklendi'); }
+      else toast.error('Yükleme başarısız');
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+};
   useEffect(() => { fetch('/api/settings').then(r => r.json()).then(d => setS(d.settings || {})); }, []);
   const save = async () => {
     setSaving(true);
@@ -875,20 +897,42 @@ function SiteSettings() {
       </div>}
 
       {activeTab === 'hikaye' && <div className="bg-[#161616] border border-amber-500/10 rounded-lg p-6 space-y-5">
-        <Field label="Hero Görsel URL (üst kapak görseli)"><input className={inp} value={s.about?.heroImage || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), heroImage: e.target.value } })}/></Field>
+        <Field label="Hero Görsel URL (üst kapak görseli)">
+  <div className="flex gap-2">
+    <input className={inp} value={s.about?.heroImage || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), heroImage: e.target.value } })}/>
+    <button onClick={() => uploadImage((url) => setS({ ...s, about: { ...(s.about||{}), heroImage: url } }))} className="px-3 border border-amber-500/30 rounded text-amber-400 hover:bg-amber-500/10"><Upload size={16}/></button>
+  </div>
+  {s.about?.heroImage && <img src={s.about.heroImage} className="w-32 h-20 object-cover rounded mt-2"/>}
+</Field>
         <Field label="Hero Alt Başlık"><input className={inp} value={s.about?.heroSubtitle || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), heroSubtitle: e.target.value } })}/></Field>
         <Field label="Ana Başlık"><input className={inp} value={s.about?.title || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), title: e.target.value } })}/></Field>
         <Field label="1. Paragraf"><textarea rows={3} className={inp} value={s.about?.paragraph1 || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), paragraph1: e.target.value } })}/></Field>
         <Field label="2. Paragraf"><textarea rows={3} className={inp} value={s.about?.paragraph2 || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), paragraph2: e.target.value } })}/></Field>
-        <Field label="Yan Görsel URL (sağdaki görsel)"><input className={inp} value={s.about?.sideImage || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), sideImage: e.target.value } })}/></Field>
+        <Field label="Yan Görsel URL (sağdaki görsel)">
+  <div className="flex gap-2">
+    <input className={inp} value={s.about?.sideImage || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), sideImage: e.target.value } })}/>
+    <button onClick={() => uploadImage((url) => setS({ ...s, about: { ...(s.about||{}), sideImage: url } }))} className="px-3 border border-amber-500/30 rounded text-amber-400 hover:bg-amber-500/10"><Upload size={16}/></button>
+  </div>
+  {s.about?.sideImage && <img src={s.about.sideImage} className="w-32 h-20 object-cover rounded mt-2"/>}
+</Field>
         <Field label="Atölye Başlığı"><input className={inp} value={s.about?.workshopTitle || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), workshopTitle: e.target.value } })}/></Field>
         <Field label="Atölye Açıklaması"><textarea rows={3} className={inp} value={s.about?.workshopDesc || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), workshopDesc: e.target.value } })}/></Field>
-        <Field label="Atölye Görseli URL"><input className={inp} value={s.about?.workshopImage || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), workshopImage: e.target.value } })}/></Field>
+        <Field label="Atölye Görseli URL">
+  <div className="flex gap-2">
+    <input className={inp} value={s.about?.workshopImage || ''} onChange={(e) => setS({ ...s, about: { ...(s.about||{}), workshopImage: e.target.value } })}/>
+    <button onClick={() => uploadImage((url) => setS({ ...s, about: { ...(s.about||{}), workshopImage: url } }))} className="px-3 border border-amber-500/30 rounded text-amber-400 hover:bg-amber-500/10"><Upload size={16}/></button>
+  </div>
+  {s.about?.workshopImage && <img src={s.about.workshopImage} className="w-32 h-20 object-cover rounded mt-2"/>}
+</Field>
       </div>}
 
       {activeTab === 'duyurular' && <div className="bg-[#161616] border border-amber-500/10 rounded-lg p-6 space-y-3">
         <p className="text-xs text-amber-100/50 mb-4">Her satıra bir duyuru yaz. Üstteki duyuru çubuğunda kayarak gösterilir.</p>
-        {(s.announcements || ['', '', '']).map((ann, i) => (
+        {(s.announcements?.length ? s.announcements : [
+  '🚚 500₺ ve üzeri alışverişlerde ücretsiz kargo',
+  '⚔️ El yapımı, sertifikalı Türk çeliği',
+  '✨ Lazerle isim yazdırma seçeneği mevcut',
+]).map((ann, i) => (
           <div key={i} className="flex gap-2">
             <input className={inp} placeholder={`Duyuru ${i + 1}`} value={ann} onChange={(e) => {
               const arr = [...(s.announcements || ['', '', ''])];
