@@ -18,6 +18,7 @@ const SECTION_TYPES = [
   { value: 'testimonials', label: 'Müşteri Yorumları' },
   { value: 'newsletter', label: 'Newsletter / Bülten' },
   { value: 'faq', label: 'SSS' },
+  { value: 'user_photos', label: 'Sizden Gelenler' },
 ];
 
 export default function AdminApp() {
@@ -419,6 +420,7 @@ function defaultData(type) {
     case 'testimonials': return { title: 'Müşteri Yorumları', items: [] };
     case 'newsletter': return { title: 'Bültenimize Katılın', subtitle: '' };
     case 'faq': return { title: 'Sıkça Sorulan Sorular', items: [] };
+    case 'user_photos': return { title: 'Sizden Gelenler', subtitle: 'Ustalıkla üretilen parçalar, onları sahiplenen kişilerle anlam kazanır.', items: [] };
     default: return {};
   }
 }
@@ -546,6 +548,31 @@ function SectionEditor({ section, onClose }) {
               </div>
             ))}
             <button onClick={() => setData({ ...data, items: [...(data.items || []), { q: '', a: '' }] })} className="w-full border-2 border-dashed border-amber-500/30 rounded py-2 text-amber-400 text-sm">+ Soru Ekle</button>
+          </div>
+        </div>
+      );
+    }
+    if (section.type === 'user_photos') {
+      return (
+        <div className="space-y-3">
+          <Field label="Başlık"><input className={inp} value={data.title || ''} onChange={(e) => setData({ ...data, title: e.target.value })}/></Field>
+          <Field label="Alt Yazı"><input className={inp} value={data.subtitle || ''} onChange={(e) => setData({ ...data, subtitle: e.target.value })}/></Field>
+          <div className="space-y-2">
+            {(data.items || []).map((it, i) => (
+              <div key={i} className="bg-black/30 border border-amber-500/10 rounded p-3 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-amber-400 text-sm">Fotoğraf {i+1}</span>
+                  <button onClick={() => setData({ ...data, items: data.items.filter((_, j) => j !== i) })} className="text-red-500"><Trash2 size={14}/></button>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <input className={inp} placeholder="Görsel URL" value={it.image || ''} onChange={(e) => { const s = [...data.items]; s[i].image = e.target.value; setData({ ...data, items: s }); }}/>
+                  <button onClick={() => upload((url) => { const s = [...data.items]; s[i].image = url; setData({ ...data, items: s }); })} className="px-3 py-2 border border-amber-500/30 rounded text-amber-400"><Upload size={16}/></button>
+                </div>
+                {it.image && <img src={it.image} className="w-24 h-16 object-cover rounded"/>}
+                <input className={inp} placeholder="İsim (örn: Ahmet K.)" value={it.name || ''} onChange={(e) => { const s = [...data.items]; s[i].name = e.target.value; setData({ ...data, items: s }); }}/>
+              </div>
+            ))}
+            <button onClick={() => setData({ ...data, items: [...(data.items || []), { image: '', name: '' }] })} className="w-full border-2 border-dashed border-amber-500/30 rounded py-2 text-amber-400 text-sm">+ Fotoğraf Ekle</button>
           </div>
         </div>
       );

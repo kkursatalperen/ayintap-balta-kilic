@@ -24,6 +24,7 @@ function SectionRouter({ section }) {
     case 'testimonials': return <Testimonials data={section.data}/>;
     case 'newsletter': return <Newsletter data={section.data}/>;
     case 'faq': return <Faq data={section.data}/>;
+    case 'user_photos': return <UserPhotos data={section.data}/>;
     default: return null;
   }
 }
@@ -250,3 +251,22 @@ function Faq({ data }) {
     </section>
   );
 }
+
+function UserPhotos({ data }) {
+  return (
+    <section className="py-24 px-6">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="font-serif text-4xl md:text-5xl text-amber-50 text-center mb-12">{data?.title}</h2>
+        <div className="grid md:grid-cols-3 gap-6">
+          {(data?.items || []).map((it, i) => (
+            <div key={i} className="bg-[#161616] border border-amber-500/10 p-8 rounded-lg text-center">
+              {it.image && <img src={it.image} className="w-full h-48 object-cover rounded-lg mb-4"/>}
+              <p className="text-amber-400 font-serif">{it.name}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
