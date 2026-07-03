@@ -44,11 +44,11 @@ export default function Header({ settings }) {
 
   const nav = [
     { name: 'Anasayfa', href: '/' },
-    { name: 'Tum Urunler', href: '/urunler' },
+    { name: 'Tüm Ürünler', href: '/urunler' },
     { name: 'Koleksiyonlar', href: '/urunler?kategori=koleksiyon-eserleri' },
     { name: 'Blog', href: '/blog' },
     { name: 'Hikayemiz', href: '/hakkimizda' },
-    { name: 'Iletisim', href: '/iletisim' },
+    { name: 'İletişim', href: '/iletisim' },
   ];
 
   const menuItems = user ? [
@@ -113,7 +113,7 @@ export default function Header({ settings }) {
                           className="w-full flex items-center gap-3 px-4 py-2.5 text-red-400 hover:bg-red-500/10 transition text-sm font-serif tracking-wide"
                         >
                           <LogOut size={15}/>
-                          Cikis Yap
+                          Çıkış Yap
                         </button>
                       </div>
                     </div>
