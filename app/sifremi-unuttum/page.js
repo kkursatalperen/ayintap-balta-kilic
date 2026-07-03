@@ -24,14 +24,19 @@ export default function ForgotPasswordPage() {
           <div className="bg-[#161616] border border-amber-500/20 rounded-lg p-8">
             <div className="text-center mb-6">
               <Shield className="text-amber-500 mx-auto mb-3" size={36}/>
-              <h1 className="font-serif text-2xl text-amber-50">Sifremi Unuttum</h1>
-              <p className="text-amber-100/50 text-sm mt-2">E-posta adresinizi girin, sifre sifirlama baglantisi gonderelim.</p>
+              <h1 style="...">Şifremi Unuttum</h1>
+              <p>E-posta adresinizi girin, şifre sıfırlama bağlantısı gönderelim.</p>
             </div>
             {done ? (
               <div className="text-center text-amber-100/80">
-                <p>Eger bu e-posta kayitliysa, sifre sifirlama baglantisi gonderildi.</p>
-                <p className="text-xs text-amber-100/40 mt-3">(Mock modunda: server konsoluna yazildi)</p>
+                {/* Başarılı mesajı */}
+<p>Eğer bu e-posta kayıtlıysa, şifre sıfırlama bağlantısı gönderildi.</p>
+{/* "Tekrar Gönder" Butonu */}
+<button onClick={handleResend} style={{ color: BRAND.gold, background: 'none', border: 'none', cursor: 'pointer' }}>
+  Bağlantı gelmediyse tekrar gönder
+</button>
               </div>
+              
             ) : (
               <form onSubmit={submit} className="space-y-4">
                 <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-posta" className="w-full bg-black/40 border border-amber-500/30 rounded px-4 py-3 text-amber-50 focus:outline-none focus:border-amber-500"/>
