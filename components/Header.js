@@ -54,7 +54,7 @@ export default function Header({ settings }) {
   const menuItems = user ? [
     ...(user.role !== 'customer' ? [{ icon: LayoutDashboard, label: 'Admin Paneli', href: '/admin' }] : []),
     { icon: User, label: 'Profilim', href: '/profil' },
-    { icon: Package, label: 'Siparislerim', href: '/profil?tab=orders' },
+    { icon: Package, label: 'Siparişlerim', href: '/profil?tab=orders' },
     { icon: Heart, label: 'Favorilerim', href: '/profil?tab=favorites' },
     { icon: MapPin, label: 'Adreslerim', href: '/profil?tab=addresses' },
     { icon: Settings, label: 'Ayarlar', href: '/profil?tab=password' },
@@ -160,7 +160,7 @@ export default function Header({ settings }) {
                     </Link>
                   ))}
                   <button onClick={handleLogout} className="flex items-center gap-3 text-red-400 font-serif text-lg tracking-wider">
-                    <LogOut size={18}/> Cikis Yap
+                    <LogOut size={18}/> Çıkış Yap
                   </button>
                 </div>
               </>
