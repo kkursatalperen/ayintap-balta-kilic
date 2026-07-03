@@ -253,18 +253,54 @@ function Faq({ data }) {
 }
 
 function UserPhotos({ data }) {
+  const items = data?.items || [];
+  if (!items.length) return null;
   return (
-    <section className="py-24 px-6">
+    <section className="py-24 px-6 bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto">
-        <h2 className="font-serif text-4xl md:text-5xl text-amber-50 text-center mb-12">{data?.title}</h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          {(data?.items || []).map((it, i) => (
-            <div key={i} className="bg-[#161616] border border-amber-500/10 p-8 rounded-lg text-center">
-              {it.image && <img src={it.image} className="w-full h-48 object-cover rounded-lg mb-4"/>}
-              <p className="text-amber-400 font-serif">{it.name}</p>
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="h-px w-12 bg-amber-500/40"/>
+            <span className="text-amber-400 font-serif text-sm tracking-[0.3em]">MÜŞTERİLERİMİZ</span>
+            <div className="h-px w-12 bg-amber-500/40"/>
+          </div>
+          <h2 className="font-serif text-4xl md:text-5xl text-amber-50">{data?.title || 'Sizden Gelenler'}</h2>
+          <p className="mt-4 text-amber-100/60 max-w-xl mx-auto">{data?.subtitle || 'Ustalıkla üretilen parçalar, onları sahiplenen kişilerle anlam kazanır.'}</p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {items.map((item, i) => (
+            <div key={i} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-amber-500/10 group">
+              <img
+                src={item.image}
+                alt={item.name || 'Müşteri fotoğrafı'}
+                className="w-full h-full object-cover object-top group-hover:scale-105 transition duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition duration-300"/>
+              {item.name && (
+                <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition duration-300">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center text-black font-bold text-xs shrink-0">
+                      {item.name[0].toUpperCase()}
+                    </div>
+                    <span className="text-amber-50 text-sm font-serif">{item.name}</span>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
+        {data?.instagramUrl && (
+          <div className="text-center mt-10">
+            <a
+              href={data.instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 border border-amber-500/40 px-8 py-3 text-amber-100 font-serif tracking-widest hover:bg-amber-500/10 transition"
+            >
+              Topluluğa Göz At
+            </a>
+          </div>
+        )}
       </div>
     </section>
   );
