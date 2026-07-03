@@ -11,6 +11,10 @@ export default function Header({ settings }) {
   const open = useCart((s) => s.open);
   const { user, setUser, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [catOpen, setCatOpen] = useState(false);
+  const catRef = useRef(null);
+  const catTimer = useRef(null);
   const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -23,6 +27,11 @@ export default function Header({ settings }) {
 
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.json()).then(d => { if (d.user) setUser(d.user, null); });
+  }, [setUser]);
+
+  useEffect(() => {
+    fetch('/api/categories').then(r => r.json()).then(d => setCategories(d.categories || [])).catch(() => {});
+  }, []);
   }, [setUser]);
 
   useEffect(() => {
@@ -74,11 +83,34 @@ export default function Header({ settings }) {
               <Logo showText={true} />
             </Link>
             <nav className="hidden lg:flex items-center gap-8">
-              {nav.map((item) => (
-                <Link key={item.href} href={item.href} className="text-amber-100/80 hover:text-amber-400 transition-colors font-serif text-sm tracking-widest uppercase">
-                  {item.name}
-                </Link>
-              ))}
+              {nav.map((item) =>
+                item.name === 'Tüm Ürünler' ? (
+                  <div key={item.href} ref={catRef} className="relative"
+                    onMouseEnter={() => { clearTimeout(catTimer.current); setCatOpen(true); }}
+                    onMouseLeave={() => { catTimer.current = setTimeout(() => setCatOpen(false), 150); }}
+                  >
+                    <button onClick={() => setCatOpen(v => !v)} className="flex items-center gap-1 text-amber-100/80 hover:text-amber-400 transition-colors font-serif text-sm tracking-widest uppercase">
+                      {item.name}
+                      <ChevronDown size={14} className={`transition-transform duration-200 ${catOpen ? 'rotate-180' : ''}`}/>
+                    </button>
+                    {catOpen && (
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-56 bg-[#0d0d0d] border border-amber-500/20 rounded-lg shadow-2xl overflow-hidden z-50">
+                        <div className="p-2">
+                          <Link href="/urunler" onClick={() => setCatOpen(false)} className="block px-4 py-2.5 text-amber-100/80 hover:text-amber-400 hover:bg-amber-500/5 rounded font-serif text-sm tracking-widest uppercase transition-colors">Tüm Ürünler</Link>
+                          {categories.length > 0 && <div className="my-2 border-t border-amber-500/10"/>}
+                          {categories.map((cat) => (
+                            <Link key={cat.id} href={`/urunler?kategori=${cat.slug}`} onClick={() => setCatOpen(false)} className="block px-4 py-2.5 text-amber-100/60 hover:text-amber-400 hover:bg-amber-500/5 rounded font-serif text-sm tracking-widest uppercase transition-colors">{cat.name}</Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link key={item.href} href={item.href} className="text-amber-100/80 hover:text-amber-400 transition-colors font-serif text-sm tracking-widest uppercase">
+                    {item.name}
+                  </Link>
+                )
+              )}
             </nav>
             <div className="flex items-center gap-2 sm:gap-4">
               {user ? (
