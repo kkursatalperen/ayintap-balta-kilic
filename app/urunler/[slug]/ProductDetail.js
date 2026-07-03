@@ -10,12 +10,13 @@ export default function ProductDetail({ product }) {
   const [qty, setQty] = useState(1);
   const [personalize, setPersonalize] = useState(false);
   const [name, setName] = useState('');
+  const [woodenBox, setWoodenBox] = useState(false);
   const [isFav, setIsFav] = useState(false);
   const [authed, setAuthed] = useState(false);
   const add = useCart((s) => s.add);
   const router = useRouter();
   const images = product.images?.length ? product.images : [product.image];
-  const finalPrice = product.price + (personalize ? (product.personalizationPrice || 250) : 0);
+  const finalPrice = product.price + (personalize ? (product.personalizationPrice || 250) : 0) + (woodenBox ? (product.woodenBoxPrice || 0) : 0);
 
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.json()).then(d => {
@@ -38,7 +39,7 @@ export default function ProductDetail({ product }) {
 
   const handleAdd = () => {
     if (personalize && !name.trim()) { toast.error('Lütfen yazdırılacak ismi giriniz'); return; }
-    add(product, { qty, personalization: personalize ? name.trim() : null });
+    add(product, { qty, personalization: personalize ? name.trim() : null, woodenBox: woodenBox ? true : false });
     toast.success('Sepete eklendi');
   };
 
@@ -78,6 +79,23 @@ export default function ProductDetail({ product }) {
             </div>
             <p className="mt-6 text-amber-100/70 leading-relaxed text-lg">{product.description}</p>
 
+            {product.woodenBoxPrice > 0 && (
+              <div className="mt-6 p-5 border border-amber-500/30 rounded bg-amber-500/5">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" checked={woodenBox} onChange={(e) => setWoodenBox(e.target.checked)} className="w-5 h-5 accent-amber-500"/>
+                  <div className="flex items-center gap-3 flex-1">
+                    {product.woodenBoxImage && (
+                      <img src={product.woodenBoxImage} alt="Ahşap Kutu" className="w-16 h-12 object-cover rounded border border-amber-500/20"/>
+                    )}
+                    <div>
+                      <span className="text-amber-100 font-serif">Özel Ahşap Kutu</span>
+                      <span className="text-amber-400 font-serif ml-2">(+{(product.woodenBoxPrice || 0).toLocaleString('tr-TR')}₺)</span>
+                      <p className="text-xs text-amber-100/50 mt-1">Hediye veya koleksiyon için özel sunum kutusu</p>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            )}
             {product.personalizable && (
               <div className="mt-6 p-5 border border-amber-500/30 rounded bg-amber-500/5">
                 <label className="flex items-center gap-3 cursor-pointer">

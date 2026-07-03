@@ -270,6 +270,14 @@ function ProductEditor({ product, categories, onClose }) {
           <Field label="Eski Fiyat (₺)"><input type="number" value={form.oldPrice} onChange={(e) => setForm({ ...form, oldPrice: Number(e.target.value) })} className={inp}/></Field>
           <Field label="Stok"><input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} className={inp}/></Field>
           <Field label="Kişiselleştirme Fiyatı (₺)"><input type="number" value={form.personalizationPrice} onChange={(e) => setForm({ ...form, personalizationPrice: Number(e.target.value) })} className={inp}/></Field>
+          <Field label="Ahşap Kutu Fiyatı (₺, 0 = seçenek yok)"><input type="number" value={form.woodenBoxPrice || 0} onChange={(e) => setForm({ ...form, woodenBoxPrice: Number(e.target.value) })} className={inp}/></Field>
+          <Field label="Ahşap Kutu Görseli URL">
+            <div className="flex gap-2">
+              <input className={inp} value={form.woodenBoxImage || ''} onChange={(e) => setForm({ ...form, woodenBoxImage: e.target.value })}/>
+              <button type="button" onClick={() => { const input = document.createElement('input'); input.type='file'; input.accept='image/*'; input.onchange=(e)=>{ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=async()=>{ const res=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dataUrl:reader.result,folder:'products'})}); const d=await res.json(); if(d.url) setForm(f=>({...f,woodenBoxImage:d.url})); }; reader.readAsDataURL(file); }; input.click(); }} className="px-3 border border-amber-500/30 rounded text-amber-400 hover:bg-amber-500/10"><Upload size={16}/></button>
+            </div>
+            {form.woodenBoxImage && <img src={form.woodenBoxImage} className="w-24 h-16 object-cover rounded mt-2"/>}
+          </Field>
           <div className="col-span-2">
             <Field label="Açıklama"><textarea rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className={inp}/></Field>
           </div>
