@@ -53,13 +53,13 @@ export default function Header({ settings }) {
     { name: 'Anasayfa', href: '/' },
     { name: 'Blog', href: '/blog' },
     { name: 'Hikayemiz', href: '/hakkimizda' },
-    { name: 'Iletisim', href: '/iletisim' },
+    { name: 'İletişim', href: '/iletisim' },
   ];
 
   const menuItems = user ? [
     ...(user.role !== 'customer' ? [{ icon: LayoutDashboard, label: 'Admin Paneli', href: '/admin' }] : []),
     { icon: User, label: 'Profilim', href: '/profil' },
-    { icon: Package, label: 'Siparislerim', href: '/profil?tab=orders' },
+    { icon: Package, label: 'Siparişlerim', href: '/profil?tab=orders' },
     { icon: Heart, label: 'Favorilerim', href: '/profil?tab=favorites' },
     { icon: MapPin, label: 'Adreslerim', href: '/profil?tab=addresses' },
     { icon: Settings, label: 'Ayarlar', href: '/profil?tab=password' },
@@ -130,7 +130,7 @@ export default function Header({ settings }) {
                       <div className="border-t border-amber-500/10 py-1">
                         <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 text-red-400 hover:bg-red-500/10 transition text-sm font-serif tracking-wide">
                           <LogOut size={15}/>
-                          Cikis Yap
+                          Çıkış Yap
                         </button>
                       </div>
                     </div>
@@ -163,14 +163,14 @@ export default function Header({ settings }) {
           </div>
           <div className="flex flex-col p-6 gap-2">
             <Link href="/" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 pb-4 mb-2">Anasayfa</Link>
-            <Link href="/urunler" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider pb-2">Tum Urunler</Link>
+            <Link href="/urunler" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider pb-2">Tüm Ürünler</Link>
             {categories.map((cat) => (
               <Link key={cat.id} href={`/urunler?kategori=${cat.slug}`} onClick={() => setMobileOpen(false)} className="text-amber-100/60 font-serif text-base tracking-wider pl-4 pb-2">{cat.name}</Link>
             ))}
             <div className="border-b border-amber-500/10 my-2"/>
             <Link href="/blog" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 pb-4">Blog</Link>
             <Link href="/hakkimizda" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 pb-4">Hikayemiz</Link>
-            <Link href="/iletisim" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 pb-4">Iletisim</Link>
+            <Link href="/iletisim" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 pb-4">İletişim</Link>
             {user && (
               <div className="border-t border-amber-500/20 pt-4 mt-2">
                 {menuItems.map((item) => (
@@ -180,7 +180,7 @@ export default function Header({ settings }) {
                   </Link>
                 ))}
                 <button onClick={handleLogout} className="flex items-center gap-3 text-red-400 font-serif text-lg tracking-wider">
-                  <LogOut size={18}/> Cikis Yap
+                  <LogOut size={18}/> Çıkış Yap
                 </button>
               </div>
             )}
