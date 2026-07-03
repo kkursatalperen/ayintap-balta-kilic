@@ -121,15 +121,15 @@ export default function Header({ settings }) {
   );
 function AnnouncementBar({ announcements }) {
   const [current, setCurrent] = useState(0);
-  const [visible, setVisible] = useState(true);
+  const [sliding, setSliding] = useState(false);
 
   useEffect(() => {
     if (!announcements?.length) return;
     const timer = setInterval(() => {
-      setVisible(false);
+      setSliding(true);
       setTimeout(() => {
         setCurrent(prev => (prev + 1) % announcements.length);
-        setVisible(true);
+        setSliding(false);
       }, 400);
     }, 3000);
     return () => clearInterval(timer);
@@ -141,8 +141,8 @@ function AnnouncementBar({ announcements }) {
     <div className="fixed top-0 left-0 right-0 z-[51] bg-amber-500 text-black text-xs font-serif tracking-widest text-center py-2 overflow-hidden">
       <div style={{
         transition: 'all 0.4s ease',
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(-10px)',
+        opacity: sliding ? 0 : 1,
+        transform: sliding ? 'translateX(-100%)' : 'translateX(0)',
       }}>
         {announcements[current]}
       </div>
