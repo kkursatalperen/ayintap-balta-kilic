@@ -67,6 +67,7 @@ export default function Header({ settings }) {
 
   return (
     <>
+      <AnnouncementBar announcements={settings?.announcements || ["500 TL ve uzeri alisverislerde ucretsiz kargo", "El yapimi, sertifikali Turk celigi", "Lazerle isim yazdirma secenegi mevcut"]}/>
       <header className={`fixed top-8 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-[#0d0d0d]/95 backdrop-blur-md border-b border-amber-500/20' : 'bg-gradient-to-b from-black/80 to-transparent'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
@@ -188,5 +189,24 @@ export default function Header({ settings }) {
       )}
       <CartDrawer settings={settings}/>
     </>
+  );
+}
+
+
+function AnnouncementBar({ announcements }) {
+  if (!announcements?.length) return null;
+  const text = announcements.join('     +     ');
+  return (
+    <div className="fixed top-0 left-0 right-0 z-[51] bg-amber-500 text-black text-xs font-serif tracking-widest py-2 overflow-hidden whitespace-nowrap">
+      <div style={{ display: 'inline-block', animation: 'marquee 20s linear infinite' }}>
+        {text}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{text}
+      </div>
+      <style>{`
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+      `}</style>
+    </div>
   );
 }
