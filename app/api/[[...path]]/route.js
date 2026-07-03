@@ -551,6 +551,16 @@ async function route(request, { params }) {
     return json({ orderCount, productCount, userCount, totalSales: totalSales[0]?.sum || 0 });
   }
 
+  if (path === '/contact' && method === 'POST') {
+    const body = await readBody(request);
+    const { name, email, subject, message } = body;
+    if (!name || !email || !message) return err('Ad, e-posta ve mesaj zorunludur', 400);
+    const col = await getCollection('contact_messages');
+    const doc = { id: uuid(), name, email, subject: subject || '', message, createdAt: new Date(), isRead: false };
+    await col.insertOne(doc);
+    return json({ ok: true });
+  }
+
   return err('Endpoint bulunamadı: ' + path, 404);
   } catch (e) {
     console.error('[API ERROR]', path, method, e);

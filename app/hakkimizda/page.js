@@ -52,7 +52,7 @@ export default async function Page() {
             </div>
             <div className="relative">
               <img
-                src={s.about?.sideImage || "https://images.unsplash.com/photo-1566454544259-f4b94c3d758c?crop=entropy&cs=srgb&fm=jpg&q=85"}
+                src={s.about?.sideImage || "https://i.pinimg.com/736x/6b/47/06/6b47065868234b8f00099a64f0847576.jpg"}
                 alt="Kılıç yapımı"
                 className="w-full h-80 object-cover rounded-lg border border-amber-500/20"
               />
