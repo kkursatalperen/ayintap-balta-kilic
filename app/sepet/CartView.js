@@ -22,8 +22,10 @@ export default function CartPage() {
         <h1 className="font-serif text-4xl text-amber-50 mb-10 flex items-center gap-3"><ShoppingCart className="text-amber-500"/> Sepetim</h1>
         {items.length === 0 ? (
           <div className="text-center py-20">
-            <p className="font-serif text-2xl text-amber-100/60">Sepetiniz boş</p>
-            <Link href="/urunler" className="inline-block mt-6 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-8 py-3 rounded font-serif tracking-widest">ALIŞVERİŞE BAŞLA</Link>
+            <ShoppingCart className="mx-auto text-amber-500/30 mb-6" size={80}/>
+            <h2 className="font-serif text-3xl text-amber-100/60 mb-3">Sepetiniz Boş</h2>
+            <p className="text-amber-100/40 max-w-sm mx-auto mb-8">Daha koleksiyonunuzu oluşturmadınız mı? Birbirinden özel el yapımı kılıçlara göz atın.</p>
+            <Link href="/urunler" className="inline-block bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-8 py-3 rounded font-serif tracking-widest hover:from-amber-400 hover:to-amber-500 transition">MAĞAZAYA DÖN</Link>
           </div>
         ) : (
           <div className="grid lg:grid-cols-3 gap-8">
