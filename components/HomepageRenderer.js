@@ -1,8 +1,7 @@
-﻿'use client';
+'use client';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ChevronRight, ChevronLeft, Star, Flame, Hammer, Shield, Heart } from 'lucide-react';
-import { toast } from 'sonner';
+import { ChevronRight, ChevronLeft, Star, Flame, Hammer, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/lib/store';
 
@@ -53,7 +52,7 @@ function HeroSlider({ data }) {
         <motion.div key={'text-'+idx} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.3 }} className="max-w-2xl">
           <div className="flex items-center gap-3 mb-6">
             <div className="h-px w-12 bg-amber-500"/>
-            <span className="text-amber-400 tracking-[0.3em] text-xs font-serif uppercase">El YapÄ±mÄ± Miras</span>
+            <span className="text-amber-400 tracking-[0.3em] text-xs font-serif uppercase">El Yapımı Miras</span>
           </div>
           <h1 className="font-serif text-5xl md:text-7xl text-amber-50 leading-tight tracking-tight">
             {slide.title}
@@ -61,10 +60,10 @@ function HeroSlider({ data }) {
           <p className="mt-6 text-lg md:text-xl text-amber-100/80 font-light max-w-xl">{slide.subtitle}</p>
           <div className="mt-10 flex gap-4 flex-wrap">
             <Link href={slide.link || '/urunler'} className="group bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-8 py-4 rounded font-serif tracking-widest hover:from-amber-400 hover:to-amber-500 transition flex items-center gap-2">
-              {slide.cta || 'KeÅŸfet'} <ChevronRight size={18} className="group-hover:translate-x-1 transition"/>
+              {slide.cta || 'Keşfet'} <ChevronRight size={18} className="group-hover:translate-x-1 transition"/>
             </Link>
             <Link href="#hikayemiz" className="border-2 border-amber-500/50 text-amber-100 px-8 py-4 rounded font-serif tracking-widest hover:bg-amber-500/10 transition">
-              HIKAYEMÄ°Z
+              HIKAYEMİZ
             </Link>
           </div>
         </motion.div>
@@ -93,8 +92,8 @@ export function ProductCard({ product }) {
           <img src={product.images?.[0] || product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition duration-700"/>
         </div>
         <div className="absolute top-3 left-3 flex flex-col gap-2">
-          {product.isNew && <span className="bg-amber-500 text-black text-[10px] font-bold tracking-widest px-2 py-1">YENÄ°</span>}
-          {product.isBestseller && <span className="bg-red-700 text-amber-50 text-[10px] font-bold tracking-widest px-2 py-1">Ã‡OK SATAN</span>}
+          {product.isNew && <span className="bg-amber-500 text-black text-[10px] font-bold tracking-widest px-2 py-1">YENİ</span>}
+          {product.isBestseller && <span className="bg-red-700 text-amber-50 text-[10px] font-bold tracking-widest px-2 py-1">ÇOK SATAN</span>}
           {product.discount > 0 && <span className="bg-emerald-700 text-amber-50 text-[10px] font-bold tracking-widest px-2 py-1">%{product.discount}</span>}
         </div>
         <div className="p-5">
@@ -104,8 +103,8 @@ export function ProductCard({ product }) {
             <span className="text-xs text-amber-100/50 ml-1">({product.reviewCount || 0})</span>
           </div>
           <div className="mt-3 flex items-end gap-2">
-            {product.oldPrice > 0 && <span className="text-sm text-amber-100/40 line-through">{product.oldPrice.toLocaleString('tr-TR')}â‚º</span>}
-            <span className="text-amber-400 font-serif text-xl">{product.price.toLocaleString('tr-TR')}â‚º</span>
+            {product.oldPrice > 0 && <span className="text-sm text-amber-100/40 line-through">{product.oldPrice.toLocaleString('tr-TR')}₺</span>}
+            <span className="text-amber-400 font-serif text-xl">{product.price.toLocaleString('tr-TR')}₺</span>
           </div>
         </div>
       </Link>
@@ -126,7 +125,7 @@ function FeaturedProducts({ data }) {
           <Flame className="text-amber-500" size={20}/>
           <div className="h-px w-12 bg-amber-500/40"/>
         </div>
-        <h2 className="font-serif text-4xl md:text-5xl text-amber-50">{data?.title || 'Ã–ne Ã‡Ä±kan Eserler'}</h2>
+        <h2 className="font-serif text-4xl md:text-5xl text-amber-50">{data?.title || 'Öne Çıkan Eserler'}</h2>
         <p className="mt-4 text-amber-100/60 max-w-2xl mx-auto">{data?.subtitle || ''}</p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -134,7 +133,7 @@ function FeaturedProducts({ data }) {
       </div>
       <div className="text-center mt-12">
         <Link href="/urunler" className="inline-flex items-center gap-2 border border-amber-500/40 px-8 py-3 text-amber-100 font-serif tracking-widest hover:bg-amber-500/10 transition">
-          TÃœM ÃœRÃœNLERÄ° GÃ–R <ChevronRight size={18}/>
+          TÜM ÜRÜNLERİ GÖR <ChevronRight size={18}/>
         </Link>
       </div>
     </section>
@@ -156,7 +155,7 @@ function Collections({ data }) {
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"/>
               <div className="absolute inset-0 flex flex-col justify-end p-8">
                 <h3 className="font-serif text-3xl text-amber-50 mb-2">{it.name}</h3>
-                <span className="text-amber-400 font-serif tracking-widest text-sm inline-flex items-center gap-2">KEÅFET <ChevronRight size={14}/></span>
+                <span className="text-amber-400 font-serif tracking-widest text-sm inline-flex items-center gap-2">KEŞFET <ChevronRight size={14}/></span>
               </div>
             </Link>
           ))}
@@ -174,8 +173,8 @@ function Story({ data }) {
           <img src={data?.image} alt={data?.title} className="w-full rounded-lg"/>
           <div className="absolute -bottom-6 -right-6 bg-amber-500 text-black p-6 hidden md:block">
             <Hammer size={40}/>
-            <p className="font-serif text-2xl mt-2">ÃœÃ§ KuÅŸak</p>
-            <p className="text-xs tracking-widest">DEMÄ°RCÄ° GELENEÄÄ°</p>
+            <p className="font-serif text-2xl mt-2">Üç Kuşak</p>
+            <p className="text-xs tracking-widest">DEMİRCİ GELENEĞİ</p>
           </div>
         </div>
         <div>
@@ -205,8 +204,8 @@ function Testimonials({ data }) {
           {(data?.items || []).map((t, i) => (
             <div key={i} className="bg-[#161616] border border-amber-500/10 p-8 rounded-lg text-left">
               <div className="flex gap-1 mb-4">{[...Array(t.rating)].map((_, i) => <Star key={i} size={16} className="text-amber-500 fill-amber-500"/>)}</div>
-              <p className="text-amber-100/80 italic font-serif text-lg leading-relaxed">â€œ{t.text}â€</p>
-              <p className="mt-6 text-amber-400 tracking-widest text-sm">â€” {t.name}</p>
+              <p className="text-amber-100/80 italic font-serif text-lg leading-relaxed">“{t.text}”</p>
+              <p className="mt-6 text-amber-400 tracking-widest text-sm">— {t.name}</p>
             </div>
           ))}
         </div>
@@ -262,18 +261,18 @@ function UserPhotos({ data }) {
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="h-px w-12 bg-amber-500/40"/>
-            <span className="text-amber-400 font-serif text-sm tracking-[0.3em]">MÃœÅTERÄ°LERÄ°MÄ°Z</span>
+            <span className="text-amber-400 font-serif text-sm tracking-[0.3em]">MÜŞTERİLERİMİZ</span>
             <div className="h-px w-12 bg-amber-500/40"/>
           </div>
           <h2 className="font-serif text-4xl md:text-5xl text-amber-50">{data?.title || 'Sizden Gelenler'}</h2>
-          <p className="mt-4 text-amber-100/60 max-w-xl mx-auto">{data?.subtitle || 'UstalÄ±kla Ã¼retilen parÃ§alar, onlarÄ± sahiplenen kiÅŸilerle anlam kazanÄ±r.'}</p>
+          <p className="mt-4 text-amber-100/60 max-w-xl mx-auto">{data?.subtitle || 'Ustalıkla üretilen parçalar, onları sahiplenen kişilerle anlam kazanır.'}</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {items.map((item, i) => (
             <div key={i} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-amber-500/10 group">
               <img
                 src={item.image}
-                alt={item.name || 'MÃ¼ÅŸteri fotoÄŸrafÄ±'}
+                alt={item.name || 'Müşteri fotoğrafı'}
                 className="w-full h-full object-cover object-top group-hover:scale-105 transition duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition duration-300"/>
@@ -298,7 +297,7 @@ function UserPhotos({ data }) {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 border border-amber-500/40 px-8 py-3 text-amber-100 font-serif tracking-widest hover:bg-amber-500/10 transition"
             >
-              TopluluÄŸa GÃ¶z At
+              Topluluğa Göz At
             </a>
           </div>
         )}
