@@ -616,6 +616,54 @@ async function route(request, { params }) {
     const u = await col.findOne({ id }, { projection: { passwordHash: 0, _id: 0 } });
     return json({ user: u });
   }
+  // ============ KUPON SİSTEMİ ============
+  if (path === '/admin/coupons' && method === 'GET') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const col = await getCollection('coupons');
+    const all = await col.find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray();
+    return json({ coupons: all });
+  }
+  if (path === '/admin/coupons' && method === 'POST') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const body = await readBody(request);
+    if (!body.code || !body.discount) return err('Kod ve indirim zorunlu', 400);
+    const col = await getCollection('coupons');
+    const existing = await col.findOne({ code: body.code.toUpperCase() });
+    if (existing) return err('Bu kupon kodu zaten mevcut', 409);
+    const doc = {
+      id: uuid(),
+      code: body.code.toUpperCase(),
+      discount: Number(body.discount),
+      type: body.type || 'percent',
+      minOrder: Number(body.minOrder) || 0,
+      maxUses: Number(body.maxUses) || 0,
+      usedCount: 0,
+      userId: body.userId || null,
+      expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
+      isActive: true,
+      createdAt: new Date(),
+    };
+    await col.insertOne(doc);
+    return json({ coupon: doc });
+  }
+  if (path.startsWith('/admin/coupons/') && method === 'DELETE') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const id = path.split('/').pop();
+    const col = await getCollection('coupons');
+    await col.deleteOne({ id });
+    return json({ ok: true });
+  }
+  if (path === '/validate-coupon' && method === 'POST') {
+    const { code, total } = await readBody(request);
+    const col = await getCollection('coupons');
+    const coupon = await col.findOne({ code: (code || '').toUpperCase(), isActive: true });
+    if (!coupon) return err('Geçersiz kupon kodu', 404);
+    if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) return err('Kupon süresi dolmuş', 400);
+    if (coupon.maxUses > 0 && coupon.usedCount >= coupon.maxUses) return err('Kupon kullanım limiti doldu', 400);
+    if (coupon.minOrder > 0 && total < coupon.minOrder) return err(`Bu kupon için minimum sipariş tutarı ${coupon.minOrder.toLocaleString('tr-TR')}₺`, 400);
+    const discountAmount = coupon.type === 'percent' ? Math.round(total * coupon.discount / 100) : coupon.discount;
+    return json({ coupon, discountAmount });
+  }
   if (path === '/admin/stats' && method === 'GET') {
     const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
     const orders = await getCollection('orders');
