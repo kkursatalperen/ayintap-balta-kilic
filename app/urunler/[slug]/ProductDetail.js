@@ -122,10 +122,29 @@ export default function ProductDetail({ product }) {
               </button>
             </div>
 
-            <div className="mt-8 grid grid-cols-3 gap-3 text-center">
-              <div className="p-4 border border-amber-500/20 rounded"><Truck className="mx-auto text-amber-500 mb-2" size={20}/><p className="text-xs text-amber-100/70">Ücretsiz Kargo</p></div>
-              <div className="p-4 border border-amber-500/20 rounded"><Shield className="mx-auto text-amber-500 mb-2" size={20}/><p className="text-xs text-amber-100/70">Güvenli Ödeme</p></div>
-              <div className="p-4 border border-amber-500/20 rounded"><Hammer className="mx-auto text-amber-500 mb-2" size={20}/><p className="text-xs text-amber-100/70">El Yapımı</p></div>
+            {/* Trust Badges */}
+            <div className="mt-6 grid grid-cols-3 gap-3 text-center">
+              <div className="p-4 border border-amber-500/20 rounded-lg bg-amber-500/5 flex flex-col items-center gap-2">
+                <Truck className="text-amber-500" size={22}/>
+                <p className="text-xs text-amber-100/80 font-serif">Ücretsiz Kargo</p>
+                <p className="text-[10px] text-amber-100/40">500₺ ve üzeri</p>
+              </div>
+              <div className="p-4 border border-amber-500/20 rounded-lg bg-amber-500/5 flex flex-col items-center gap-2">
+                <Shield className="text-amber-500" size={22}/>
+                <p className="text-xs text-amber-100/80 font-serif">Güvenli Ödeme</p>
+                <p className="text-[10px] text-amber-100/40">256-bit SSL</p>
+              </div>
+              <div className="p-4 border border-amber-500/20 rounded-lg bg-amber-500/5 flex flex-col items-center gap-2">
+                <Hammer className="text-amber-500" size={22}/>
+                <p className="text-xs text-amber-100/80 font-serif">El Yapımı</p>
+                <p className="text-[10px] text-amber-100/40">Özel Seri</p>
+              </div>
+            </div>
+
+            {/* Ek güven mesajı */}
+            <div className="mt-4 flex items-center gap-2 text-xs text-amber-100/50 border border-amber-500/10 rounded-lg p-3 bg-black/20">
+              <Check className="text-emerald-500 shrink-0" size={14}/>
+              <span>Bu ürün <span className="text-amber-400">el yapımı</span> ve <span className="text-amber-400">sertifikalı Türk çeliğinden</span> üretilmektedir. Her parça ustanın imzasını taşır.</span>
             </div>
 
             <div className="mt-10">
