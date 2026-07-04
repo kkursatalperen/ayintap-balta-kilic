@@ -320,10 +320,11 @@ function MediaSection({ data }) {
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="h-px w-12 bg-amber-500/40"/>
-            <span className="text-amber-400 font-serif text-sm tracking-[0.3em]">{data?.badge || 'MEDYADA BIZ'}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
+<span className="text-amber-400 font-serif text-sm tracking-[0.3em]">{data?.badge || 'MEDYADA BİZ'}</span>
             <div className="h-px w-12 bg-amber-500/40"/>
           </div>
-          <h2 className="font-serif text-4xl md:text-5xl text-amber-50">{data?.title || 'Haberlerde Ayintap Balta Kilic'}</h2>
+          <h2 className="font-serif text-4xl md:text-5xl text-amber-50">{data?.title || 'Haberlerde Ayıntap Balta Kılıç'}</h2>
           <p className="mt-4 text-amber-100/60 max-w-xl mx-auto">{data?.subtitle || ''}</p>
         </div>
         <div className="grid md:grid-cols-2 gap-8">
@@ -345,7 +346,7 @@ function MediaSection({ data }) {
                 <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen/>
               )}
             </div>
-            <p className="mt-3 text-amber-100/60 text-sm font-serif">{data?.youtubeLabel || 'Televizyon Haber Yayini'}</p>
+            <p className="mt-3 text-amber-100/60 text-sm font-serif">{data?.youtubeLabel || 'Televizyon Haber Yayını'}</p>
           </div>
           <div className="group">
             <div className="relative aspect-video rounded-lg overflow-hidden border border-amber-500/20 bg-black">
@@ -353,7 +354,7 @@ function MediaSection({ data }) {
                 <source src={videoUrl} type="video/mp4"/>
               </video>
             </div>
-            <p className="mt-3 text-amber-100/60 text-sm font-serif">{data?.videoLabel || 'Atolye Tanitim Videosu'}</p>
+            <p className="mt-3 text-amber-100/60 text-sm font-serif">{data?.videoLabel || 'Atölye Tanıtım Videosu'}</p>
           </div>
         </div>
       </div>
