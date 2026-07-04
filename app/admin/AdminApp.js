@@ -19,6 +19,7 @@ const SECTION_TYPES = [
   { value: 'testimonials', label: 'Müşteri Yorumları' },
   { value: 'newsletter', label: 'Newsletter / Bülten' },
   { value: 'faq', label: 'SSS' },
+  { value: 'media', label: 'Medyada Biz' },
   { value: 'user_photos', label: 'Sizden Gelenler' },
 ];
 
@@ -432,6 +433,7 @@ function defaultData(type) {
     case 'newsletter': return { title: 'Bültenimize Katılın', subtitle: '' };
     case 'faq': return { title: 'Sıkça Sorulan Sorular', items: [] };
     case 'user_photos': return { title: 'Sizden Gelenler', subtitle: 'Ustalıkla üretilen parçalar, onları sahiplenen kişilerle anlam kazanır.', items: [] };
+    case 'media': return { title: 'Haberlerde Ayintap Balta Kilic', subtitle: '', badge: 'MEDYADA BIZ', youtubeUrl: 'https://www.youtube.com/watch?v=a-2mcTTl3Hk', youtubeLabel: 'Televizyon Haber Yayini', videoUrl: 'https://res.cloudinary.com/dd6r2yroe/video/upload/v1783178918/real_beiqhi.mp4', videoLabel: 'Atolye Tanitim Videosu' };
     default: return {};
   }
 }
@@ -485,6 +487,19 @@ function SectionEditor({ section, onClose }) {
         </div>
       );
     }
+    if (section.type === 'media') {
+  return (
+    <div className="space-y-3">
+      <Field label="Baslik"><input className={inp} value={data.title || ''} onChange={(e) => setData({ ...data, title: e.target.value })}/></Field>
+      <Field label="Alt Baslik"><input className={inp} value={data.subtitle || ''} onChange={(e) => setData({ ...data, subtitle: e.target.value })}/></Field>
+      <Field label="Rozet Yazisi"><input className={inp} value={data.badge || ''} onChange={(e) => setData({ ...data, badge: e.target.value })}/></Field>
+      <Field label="YouTube URL"><input className={inp} value={data.youtubeUrl || ''} onChange={(e) => setData({ ...data, youtubeUrl: e.target.value })}/></Field>
+      <Field label="YouTube Etiketi"><input className={inp} value={data.youtubeLabel || ''} onChange={(e) => setData({ ...data, youtubeLabel: e.target.value })}/></Field>
+      <Field label="Video URL (Cloudinary)"><input className={inp} value={data.videoUrl || ''} onChange={(e) => setData({ ...data, videoUrl: e.target.value })}/></Field>
+      <Field label="Video Etiketi"><input className={inp} value={data.videoLabel || ''} onChange={(e) => setData({ ...data, videoLabel: e.target.value })}/></Field>
+    </div>
+  );
+}
     if (section.type === 'collections') {
       return (
         <div className="space-y-3">
