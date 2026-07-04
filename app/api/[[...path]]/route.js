@@ -34,10 +34,10 @@ async function route(request, { params }) {
   // ============ AUTH ============
   if (path === '/auth/register' && method === 'POST') {
     const { email, password, name, phone } = await readBody(request);
-    if (!email || !password) return err('Email ve şifre zorunlu', 400);
+    if (!email || !password) return err('Email ve ÅŸifre zorunlu', 400);
     const users = await getCollection('users');
     const existing = await users.findOne({ email: email.toLowerCase() });
-    if (existing) return err('Bu e-posta zaten kayıtlı', 409);
+    if (existing) return err('Bu e-posta zaten kayÄ±tlÄ±', 409);
     const hash = await hashPassword(password);
     const user = { id: uuid(), email: email.toLowerCase(), name: name || '', phone: phone || '', passwordHash: hash, role: 'customer', isActive: true, createdAt: new Date() };
     await users.insertOne(user);
@@ -51,9 +51,9 @@ async function route(request, { params }) {
     const { email, password } = await readBody(request);
     const users = await getCollection('users');
     const user = await users.findOne({ email: (email || '').toLowerCase() });
-    if (!user) return err('Kullanıcı bulunamadı', 404);
+    if (!user) return err('KullanÄ±cÄ± bulunamadÄ±', 404);
     const ok = await comparePassword(password, user.passwordHash);
-    if (!ok) return err('Şifre hatalı', 401);
+    if (!ok) return err('Åifre hatalÄ±', 401);
     const token = signToken({ id: user.id, role: user.role });
     const safe = { id: user.id, email: user.email, name: user.name, phone: user.phone, role: user.role };
     const res = json({ user: safe, token });
@@ -172,7 +172,7 @@ async function route(request, { params }) {
     const slug = path.split('/').pop();
     const col = await getCollection('products');
     const p = await col.findOne({ slug }, { projection: { _id: 0 } });
-    if (!p) return err('Ürün bulunamadı', 404);
+    if (!p) return err('ÃœrÃ¼n bulunamadÄ±', 404);
     return json({ product: p });
   }
   if (path === '/admin/products' && method === 'POST') {
@@ -264,7 +264,7 @@ async function route(request, { params }) {
       statusHistory: [{ status: 'pending_payment', at: new Date(), note: 'Siparis olusturuldu' }],
       createdAt: new Date()
     };
-    // Stok otomatik düş
+    // Stok otomatik dÃ¼ÅŸ
     const productsCol = await getCollection('products');
     for (const item of doc.items) {
       await productsCol.updateOne(
@@ -561,7 +561,42 @@ async function route(request, { params }) {
     return json({ ok: true });
   }
 
-  return err('Endpoint bulunamadı: ' + path, 404);
+
+  // ============ ADMIN CATEGORIES ============
+  if (path === '/admin/categories' && method === 'GET') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const col = await getCollection('categories');
+    const all = await col.find({}, { projection: { _id: 0 } }).sort({ order: 1 }).toArray();
+    return json({ categories: all });
+  }
+  if (path === '/admin/categories' && method === 'POST') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const body = await readBody(request);
+    const col = await getCollection('categories');
+    const last = await col.find({}).sort({ order: -1 }).limit(1).toArray();
+    const order = (last[0]?.order || 0) + 1;
+    const doc = { id: uuid(), name: body.name || '', slug: body.slug || (body.name||'').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,''), description: body.description || '', image: body.image || '', order, isActive: body.isActive !== false, createdAt: new Date() };
+    await col.insertOne(doc);
+    return json({ category: doc });
+  }
+  if (path.startsWith('/admin/categories/') && method === 'PUT') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const id = path.split('/').pop();
+    const body = await readBody(request);
+    delete body._id; delete body.id;
+    const col = await getCollection('categories');
+    await col.updateOne({ id }, { $set: { ...body, updatedAt: new Date() } });
+    const c = await col.findOne({ id }, { projection: { _id: 0 } });
+    return json({ category: c });
+  }
+  if (path.startsWith('/admin/categories/') && method === 'DELETE') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const id = path.split('/').pop();
+    const col = await getCollection('categories');
+    await col.deleteOne({ id });
+    return json({ ok: true });
+  }
+  return err('Endpoint bulunamadÄ±: ' + path, 404);
   } catch (e) {
     console.error('[API ERROR]', path, method, e);
     return err('Sunucu hatasi olustu, lutfen tekrar deneyin', 500);

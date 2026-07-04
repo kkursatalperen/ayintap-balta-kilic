@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Logo from '@/components/Logo';
 import AdminErrorBoundary from '@/components/AdminErrorBoundary';
+import CategoriesTab from './CategoriesTab';
 
 const SECTION_TYPES = [
   { value: 'hero_slider', label: 'Hero Slider' },
@@ -78,6 +79,7 @@ export default function AdminApp() {
             { id: 'homepage', icon: LayoutGrid, label: 'Homepage Builder' },
             { id: 'orders', icon: ShoppingBag, label: 'Siparişler' },
             { id: 'blog', icon: FileText, label: 'Blog' },
+            { id: 'categories', icon: LayoutGrid, label: 'Kategoriler' },
             { id: 'settings', icon: Settings, label: 'Site Ayarları' },
           ].map((t) => (
             <button key={t.id} onClick={() => { setTab(t.id); setSidebarOpen(false); }}
@@ -103,6 +105,7 @@ export default function AdminApp() {
           {tab === 'homepage' && <HomepageBuilder/>}
           {tab === 'orders' && <Orders/>}
           {tab === 'blog' && <BlogAdmin/>}
+          {tab === 'categories' && <CategoriesTab/>}
           {tab === 'settings' && <SiteSettings/>}
         </AdminErrorBoundary>
       </main>
