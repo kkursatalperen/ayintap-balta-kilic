@@ -171,4 +171,26 @@ export default function Header({ settings }) {
       <CartDrawer settings={settings}/>
     </>
   );
+function AnnouncementBar({ announcements }) {
+  if (!announcements?.length) return null;
+
+  const text = announcements.join('          ✦          ');
+
+  return (
+    <div className="fixed top-0 left-0 right-0 z-[51] bg-amber-500 text-black text-xs font-serif tracking-widest py-2 overflow-hidden whitespace-nowrap">
+      <div style={{
+        display: 'inline-block',
+        animation: 'marquee 20s linear infinite',
+      }}>
+        {text}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{text}
+      </div>
+      <style>{`
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+      `}</style>
+    </div>
+  );
+}
 }
