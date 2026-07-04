@@ -32,7 +32,6 @@ const PAYMENT_METHODS = [
 export default function CheckoutFlow() {
   const router = useRouter();
   const { items, total, clear } = useCart();
-  const [mounted, setMounted] = useState(false);
   const [step, setStep] = useState(1);
   const [authChecked, setAuthChecked] = useState(false);
   const [user, setUser] = useState(null);
@@ -70,9 +69,6 @@ export default function CheckoutFlow() {
     });
   }, []);
 
-  useEffect(() => { setMounted(true); }, []);
-
-  if (!mounted) return <main className="pt-32 min-h-screen text-center text-amber-100/50">Yükleniyor...</main>;
   if (!authChecked) return <main className="pt-32 min-h-screen text-center text-amber-100/50">Yükleniyor...</main>;
   if (items.length === 0) {
     return (
@@ -103,10 +99,8 @@ export default function CheckoutFlow() {
   const canProceed = () => {
     if (step === 1) {
       if (user && selectedAddrId && !showNewAddr) return true;
-      const emailOk = !user ? !!guest.email : true;
-const emailValid = !user ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guest.email) : true;
-const phoneValid = guest.phone.length >= 10 && guest.phone.length <= 11;
-return !!(guest.fullName && emailValid && phoneValid && guest.city && guest.district && guest.addressLine);
+      if (user && showNewAddr) return guest.fullName && guest.phone && guest.city && guest.district && guest.addressLine;
+      return guest.fullName && guest.email && guest.phone && guest.city && guest.district && guest.addressLine;
     }
     if (step === 2) return !!shippingMethod;
     if (step === 3) return !!paymentMethod;
@@ -115,20 +109,6 @@ return !!(guest.fullName && emailValid && phoneValid && guest.city && guest.dist
   };
 
   const next = async () => {
-    if (step === 1) {
-      if (!user && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guest.email)) {
-        toast.error('Geçerli bir e-posta adresi girin (örn: ad@gmail.com)');
-        return;
-      }
-      if (guest.phone.length < 10 || guest.phone.length > 11) {
-        toast.error('Telefon numarası 10 veya 11 haneli olmalıdır');
-        return;
-      }
-      if (!guest.fullName) { toast.error('Ad Soyad alanı boş bırakılamaz'); return; }
-      if (!guest.city) { toast.error('İl alanı boş bırakılamaz'); return; }
-      if (!guest.district) { toast.error('İlçe alanı boş bırakılamaz'); return; }
-      if (!guest.addressLine) { toast.error('Adres alanı boş bırakılamaz'); return; }
-    }
     if (!canProceed()) { toast.error('Lütfen gerekli alanları doldurun'); return; }
     if (step === 1 && user && showNewAddr && guest.addressLine) {
       // Save new address for logged user
@@ -225,8 +205,8 @@ return !!(guest.fullName && emailValid && phoneValid && guest.city && guest.dist
               <button onClick={() => step > 1 ? setStep(step - 1) : router.push('/sepet')} className="border border-amber-500/30 text-amber-100 px-5 py-3 rounded font-serif tracking-widest hover:bg-amber-500/5 transition flex items-center gap-2">
                 <ChevronLeft size={18}/> {step > 1 ? 'GERİ' : 'SEPETE DÖN'}
               </button>
-              <button onClick={next} disabled={placing} className="bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-6 py-3 rounded font-serif tracking-widest hover:from-amber-400 hover:to-amber-500 transition disabled:opacity-50 flex items-center gap-2">
-                {placing ? 'İşLENİYOR...' : step < 4 ? (<>DEVAM ET <ChevronRight size={18}/></>) : (<>SİPARİŞİ TAMAMLA <Lock size={16}/></>)}
+              <button onClick={next} disabled={!canProceed() || placing} className="bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-6 py-3 rounded font-serif tracking-widest hover:from-amber-400 hover:to-amber-500 transition disabled:opacity-50 flex items-center gap-2">
+                {placing ? 'İŞLENİYOR...' : step < 4 ? (<>DEVAM ET <ChevronRight size={18}/></>) : (<>SİPARİŞİ TAMAMLA <Lock size={16}/></>)}
               </button>
             </div>
           </div>
@@ -306,7 +286,7 @@ function AddressStep({ user, addresses, selectedAddrId, setSelectedAddrId, showN
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2"><label className={label}>AD SOYAD</label><input value={guest.fullName} onChange={(e) => setGuest({ ...guest, fullName: e.target.value })} className={inp}/></div>
             {!user && <div><label className={label}>E-POSTA</label><input type="email" value={guest.email} onChange={(e) => setGuest({ ...guest, email: e.target.value })} className={inp}/></div>}
-            <div><label className={label}>TELEFON</label><input value={guest.phone} onChange={(e) => setGuest({ ...guest, phone: e.target.value.replace(/[^0-9]/g, '') })} className={inp} type="tel" inputMode="numeric"/></div>
+            <div><label className={label}>TELEFON</label><input value={guest.phone} onChange={(e) => setGuest({ ...guest, phone: e.target.value })} className={inp}/></div>
             <div><label className={label}>İL</label><input value={guest.city} onChange={(e) => setGuest({ ...guest, city: e.target.value })} className={inp}/></div>
             <div><label className={label}>İLÇE</label><input value={guest.district} onChange={(e) => setGuest({ ...guest, district: e.target.value })} className={inp}/></div>
             <div><label className={label}>POSTA KODU</label><input value={guest.zipCode} onChange={(e) => setGuest({ ...guest, zipCode: e.target.value })} className={inp}/></div>
@@ -431,6 +411,3 @@ function SummaryCard({ icon: Icon, title, children }) {
     </div>
   );
 }
-
-
-
