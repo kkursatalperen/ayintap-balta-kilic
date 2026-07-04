@@ -10,6 +10,7 @@ import {
 import Logo from '@/components/Logo';
 import AdminErrorBoundary from '@/components/AdminErrorBoundary';
 import CategoriesTab from './CategoriesTab';
+import UsersTab from './UsersTab';
 
 const SECTION_TYPES = [
   { value: 'hero_slider', label: 'Hero Slider' },
