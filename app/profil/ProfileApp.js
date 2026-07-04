@@ -7,10 +7,10 @@ import { User, Package, Heart, MapPin, Lock, LogOut, Edit, Trash2, Plus, Check, 
 
 const TABS = [
   { id: 'profile', label: 'Profilim', icon: User },
-  { id: 'orders', label: 'SipariÅŸlerim', icon: Package },
+  { id: 'orders', label: 'Siparişlerim', icon: Package },
   { id: 'favorites', label: 'Favorilerim', icon: Heart },
   { id: 'addresses', label: 'Adreslerim', icon: MapPin },
-  { id: 'password', label: 'Åifre DeÄŸiÅŸtir', icon: Lock },
+  { id: 'password', label: 'Şifre Değiştir', icon: Lock },
 ];
 
 export default function ProfileApp() {
@@ -38,8 +38,8 @@ export default function ProfileApp() {
     <main className="pt-28 pb-20 min-h-screen">
       <div className="max-w-7xl mx-auto px-6">
         <div className="mb-10">
-          <h1 className="font-serif text-4xl text-amber-50">HoÅŸgeldin, {user.name || user.email.split('@')[0]}</h1>
-          <p className="text-amber-100/50 mt-2">Hesap ayarlarÄ±nÄ± ve sipariÅŸlerini yÃ¶net</p>
+          <h1 className="font-serif text-4xl text-amber-50">Hoşgeldin, {user.name || user.email.split('@')[0]}</h1>
+          <p className="text-amber-100/50 mt-2">Hesap ayarlarını ve siparişlerini yönet</p>
         </div>
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Sidebar */}
@@ -64,7 +64,7 @@ export default function ProfileApp() {
                   </Link>
                 )}
                 <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 rounded text-sm text-red-400 hover:bg-red-500/10">
-                  <LogOut size={16}/> Ã‡Ä±kÄ±ÅŸ Yap
+                  <LogOut size={16}/> Çıkış Yap
                 </button>
               </nav>
             </div>
@@ -93,7 +93,7 @@ function ProfileTab({ user, onUpdate }) {
     setSaving(true);
     const res = await fetch('/api/me/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
     const d = await res.json();
-    if (res.ok) { onUpdate(d.user); toast.success('Profil gÃ¼ncellendi'); } else toast.error(d.error);
+    if (res.ok) { onUpdate(d.user); toast.success('Profil güncellendi'); } else toast.error(d.error);
     setSaving(false);
   };
   return (
@@ -101,9 +101,9 @@ function ProfileTab({ user, onUpdate }) {
       <h2 className="font-serif text-2xl text-amber-50 mb-6">Profil Bilgilerim</h2>
       <div className="space-y-4 max-w-md">
         <div><label className="text-xs text-amber-400 font-serif tracking-widest block mb-1">E-POSTA</label><input disabled value={user.email} className={inp + ' opacity-50'}/></div>
-        <div><label className="text-xs text-amber-400 font-serif tracking-widest block mb-1">Ä°SÄ°M SOYÄ°SÄ°M</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inp}/></div>
+        <div><label className="text-xs text-amber-400 font-serif tracking-widest block mb-1">İsim SOYİSİM</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inp}/></div>
         <div><label className="text-xs text-amber-400 font-serif tracking-widest block mb-1">TELEFON</label><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^0-9]/g, '') })} className={inp} type="tel" inputMode="numeric"/></div>
-        <button onClick={save} disabled={saving} className={btn}>{saving ? 'KAYDEDÄ°LÄ°YOR...' : 'GÃœNCELLE'}</button>
+        <button onClick={save} disabled={saving} className={btn}>{saving ? 'KAYDEDİLİYOR...' : 'GÜNCELLE'}</button>
       </div>
     </div>
   );
@@ -113,12 +113,12 @@ function OrdersTab() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => { fetch('/api/me/orders').then(r => r.json()).then(d => { setOrders(d.orders || []); setLoading(false); }); }, []);
-  if (loading) return <div className="text-amber-100/50">YÃ¼kleniyor...</div>;
+  if (loading) return <div className="text-amber-100/50">Yükleniyor...</div>;
   if (orders.length === 0) return (
     <div className="bg-[#161616] border border-amber-500/20 rounded-lg p-12 text-center">
       <Package className="mx-auto text-amber-500/40 mb-4" size={48}/>
-      <p className="text-amber-100/60 font-serif text-lg">HenÃ¼z sipariÅŸin yok</p>
-      <Link href="/urunler" className="inline-block mt-4 text-amber-400 hover:underline">AlÄ±ÅŸveriÅŸe baÅŸla</Link>
+      <p className="text-amber-100/60 font-serif text-lg">Henüz siparişin yok</p>
+      <Link href="/urunler" className="inline-block mt-4 text-amber-400 hover:underline">Alışverişe başla</Link>
     </div>
   );
   return (
@@ -129,12 +129,12 @@ function OrdersTab() {
 }
 
 const STATUS_MAP = {
-  pending_payment: { label: 'Ã–deme Bekliyor', color: 'bg-amber-700/30 text-amber-300' },
-  paid: { label: 'Ã–deme AlÄ±ndÄ±', color: 'bg-emerald-700/30 text-emerald-300' },
-  preparing: { label: 'HazÄ±rlanÄ±yor', color: 'bg-blue-700/30 text-blue-300' },
+  pending_payment: { label: 'Ödeme Bekliyor', color: 'bg-amber-700/30 text-amber-300' },
+  paid: { label: 'Ödeme Alındı', color: 'bg-emerald-700/30 text-emerald-300' },
+  preparing: { label: 'Hazırlanıyor', color: 'bg-blue-700/30 text-blue-300' },
   shipped: { label: 'Kargoya Verildi', color: 'bg-purple-700/30 text-purple-300' },
   delivered: { label: 'Teslim Edildi', color: 'bg-green-700/30 text-green-300' },
-  cancelled: { label: 'Ä°ptal Edildi', color: 'bg-red-700/30 text-red-300' },
+  cancelled: { label: 'İptal Edildi', color: 'bg-red-700/30 text-red-300' },
 };
 const STATUS_TIMELINE = ['pending_payment', 'paid', 'preparing', 'shipped', 'delivered'];
 
@@ -220,8 +220,8 @@ function FavoritesTab() {
   if (favs.length === 0) return (
     <div className="bg-[#161616] border border-amber-500/20 rounded-lg p-12 text-center">
       <Heart className="mx-auto text-amber-500/40 mb-4" size={48}/>
-      <p className="text-amber-100/60 font-serif text-lg">Favorilerin boÅŸ</p>
-      <Link href="/urunler" className="inline-block mt-4 text-amber-400 hover:underline">ÃœrÃ¼nleri keÅŸfet</Link>
+      <p className="text-amber-100/60 font-serif text-lg">Favorilerin boş</p>
+      <Link href="/urunler" className="inline-block mt-4 text-amber-400 hover:underline">Ürünleri keşfet</Link>
     </div>
   );
   return (
@@ -253,7 +253,7 @@ function AddressesTab() {
   return (
     <div className="space-y-4">
       <button onClick={() => setEditing({})} className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-5 py-2 rounded font-serif tracking-widest">
-        <Plus size={18}/> YENÄ° ADRES
+        <Plus size={18}/> YENİ ADRES
       </button>
       <div className="grid md:grid-cols-2 gap-4">
         {addresses.map((a) => (
@@ -294,13 +294,13 @@ function AddressEditor({ address, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
       <div className="bg-[#161616] border border-amber-500/30 rounded-lg p-6 max-w-lg w-full">
-        <h3 className="font-serif text-xl text-amber-50 mb-5">{address.id ? 'Adres DÃ¼zenle' : 'Yeni Adres'}</h3>
+        <h3 className="font-serif text-xl text-amber-50 mb-5">{address.id ? 'Adres Düzenle' : 'Yeni Adres'}</h3>
         <div className="grid grid-cols-2 gap-3">
-          <input className={inp} placeholder="BaÅŸlÄ±k (Ev, Ä°ÅŸ)" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}/>
+          <input className={inp} placeholder="Başlık (Ev, İş)" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}/>
           <input className={inp} placeholder="Telefon" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^0-9]/g, '') })} type="tel" inputMode="numeric"/>
-          <input className={inp + ' col-span-2'} placeholder="Ä°sim Soyisim" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })}/>
-          <input className={inp} placeholder="Ä°l" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}/>
-          <input className={inp} placeholder="Ä°lÃ§e" value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })}/>
+          <input className={inp + ' col-span-2'} placeholder="İsim Soyisim" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })}/>
+          <input className={inp} placeholder="İl" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}/>
+          <input className={inp} placeholder="İlçe" value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })}/>
           <input className={inp} placeholder="Posta Kodu" value={form.zipCode} onChange={(e) => setForm({ ...form, zipCode: e.target.value })}/>
           <textarea className={inp + ' col-span-2'} rows={2} placeholder="Adres" value={form.addressLine} onChange={(e) => setForm({ ...form, addressLine: e.target.value })}/>
           <label className="col-span-2 flex items-center gap-2 text-amber-100">
@@ -309,7 +309,7 @@ function AddressEditor({ address, onClose }) {
         </div>
         <div className="mt-6 flex gap-3">
           <button onClick={save} disabled={saving} className={btn}>{saving ? '...' : 'KAYDET'}</button>
-          <button onClick={onClose} className="border border-amber-500/30 text-amber-100 px-6 py-3 rounded font-serif tracking-widest">Ä°PTAL</button>
+          <button onClick={onClose} className="border border-amber-500/30 text-amber-100 px-6 py-3 rounded font-serif tracking-widest">İPTAL</button>
         </div>
       </div>
     </div>
@@ -320,23 +320,23 @@ function PasswordTab() {
   const [form, setForm] = useState({ oldPassword: '', newPassword: '', confirm: '' });
   const [saving, setSaving] = useState(false);
   const save = async () => {
-    if (form.newPassword !== form.confirm) { toast.error('Yeni ÅŸifreler eÅŸleÅŸmiyor'); return; }
-    if (form.newPassword.length < 6) { toast.error('Åifre en az 6 karakter olmalÄ±'); return; }
+    if (form.newPassword !== form.confirm) { toast.error('Yeni şifreler eşleşmiyor'); return; }
+    if (form.newPassword.length < 6) { toast.error('Şifre en az 6 karakter olmalı'); return; }
     setSaving(true);
     const res = await fetch('/api/me/change-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
     const d = await res.json();
-    if (res.ok) { toast.success('Åifre deÄŸiÅŸtirildi'); setForm({ oldPassword: '', newPassword: '', confirm: '' }); }
+    if (res.ok) { toast.success('Şifre değiştirildi'); setForm({ oldPassword: '', newPassword: '', confirm: '' }); }
     else toast.error(d.error);
     setSaving(false);
   };
   return (
     <div className="bg-[#161616] border border-amber-500/20 rounded-lg p-8 max-w-md">
-      <h2 className="font-serif text-2xl text-amber-50 mb-6">Åifre DeÄŸiÅŸtir</h2>
+      <h2 className="font-serif text-2xl text-amber-50 mb-6">Şifre Değiştir</h2>
       <div className="space-y-4">
-        <input type="password" placeholder="Mevcut ÅŸifre" value={form.oldPassword} onChange={(e) => setForm({ ...form, oldPassword: e.target.value })} className={inp}/>
-        <input type="password" placeholder="Yeni ÅŸifre (min 6)" value={form.newPassword} onChange={(e) => setForm({ ...form, newPassword: e.target.value })} className={inp}/>
-        <input type="password" placeholder="Yeni ÅŸifre (tekrar)" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} className={inp}/>
-        <button onClick={save} disabled={saving} className={btn}>{saving ? 'GÃœNCELLENÄ°YOR...' : 'ÅÄ°FREYÄ° DEÄÄ°ÅTÄ°R'}</button>
+        <input type="password" placeholder="Mevcut Şifre" value={form.oldPassword} onChange={(e) => setForm({ ...form, oldPassword: e.target.value })} className={inp}/>
+        <input type="password" placeholder="Yeni Şifre (min 6)" value={form.newPassword} onChange={(e) => setForm({ ...form, newPassword: e.target.value })} className={inp}/>
+        <input type="password" placeholder="Yeni Şifre (tekrar)" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} className={inp}/>
+        <button onClick={save} disabled={saving} className={btn}>{saving ? 'GÜNCELLENİYOR...' : 'ŞİFREYİ DEĞİŞTİR'}</button>
       </div>
     </div>
   );
