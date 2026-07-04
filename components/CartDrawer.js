@@ -24,9 +24,17 @@ export default function CartDrawer() {
         </div>
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {items.length === 0 && (
-            <div className="text-center py-20 text-amber-100/60">
-              <p className="font-serif text-lg">Sepetiniz henuz boş</p>
-              <p className="text-sm mt-2">Örsün mirasını keşfedin.</p>
+            <div className="text-center py-16 px-6 flex flex-col items-center">
+              <div className="w-20 h-20 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-6">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-amber-500/60">
+                  <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
+                </svg>
+              </div>
+              <h3 className="font-serif text-xl text-amber-50 mb-2">Sepetiniz boş</h3>
+              <p className="text-amber-100/50 text-sm leading-relaxed mb-6">Henüz koleksiyonunu oluşturmadın mı? Birbirinden özel kılıçlara göz at.</p>
+              <Link href="/urunler" onClick={close} className="bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-6 py-3 rounded font-serif tracking-widest hover:from-amber-400 hover:to-amber-500 transition text-sm">
+                MAĞAZAYA GİT
+              </Link>
             </div>
           )}
           {items.map((i) => (
