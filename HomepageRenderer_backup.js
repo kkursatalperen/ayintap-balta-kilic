@@ -1,10 +1,9 @@
-﻿'use client';
+'use client';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ChevronRight, ChevronLeft, Star, Flame, Hammer, Shield, Heart } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Star, Flame, Hammer, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/lib/store';
-import { toast } from 'sonner';
 
 export default function HomepageRenderer({ sections }) {
   return (
@@ -55,13 +54,17 @@ function HeroSlider({ data }) {
             <div className="h-px w-12 bg-amber-500"/>
             <span className="text-amber-400 tracking-[0.3em] text-xs font-serif uppercase">El Yapımı Miras</span>
           </div>
-          <h1 className="font-serif text-5xl md:text-7xl text-amber-50 leading-tight tracking-tight">{slide.title}</h1>
+          <h1 className="font-serif text-5xl md:text-7xl text-amber-50 leading-tight tracking-tight">
+            {slide.title}
+          </h1>
           <p className="mt-6 text-lg md:text-xl text-amber-100/80 font-light max-w-xl">{slide.subtitle}</p>
           <div className="mt-10 flex gap-4 flex-wrap">
             <Link href={slide.link || '/urunler'} className="group bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-8 py-4 rounded font-serif tracking-widest hover:from-amber-400 hover:to-amber-500 transition flex items-center gap-2">
               {slide.cta || 'Keşfet'} <ChevronRight size={18} className="group-hover:translate-x-1 transition"/>
             </Link>
-            <Link href="#hikayemiz" className="border-2 border-amber-500/50 text-amber-100 px-8 py-4 rounded font-serif tracking-widest hover:bg-amber-500/10 transition">HİKAYEMİZ</Link>
+            <Link href="#hikayemiz" className="border-2 border-amber-500/50 text-amber-100 px-8 py-4 rounded font-serif tracking-widest hover:bg-amber-500/10 transition">
+              HIKAYEMİZ
+            </Link>
           </div>
         </motion.div>
       </div>
@@ -82,19 +85,6 @@ function HeroSlider({ data }) {
 
 export function ProductCard({ product }) {
   const add = useCart((s) => s.add);
-  const [isFav, setIsFav] = useState(false);
-
-  const toggleFav = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const me = await fetch('/api/auth/me').then(r => r.json()).catch(() => ({}));
-    if (!me.user) { toast.error('Favorilere eklemek için giriş yapın'); return; }
-    const res = await fetch('/api/me/favorites', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productId: product.id }) });
-    const d = await res.json();
-    setIsFav(d.added);
-    toast.success(d.added ? 'Favorilere eklendi' : 'Favorilerden çıkarıldı');
-  };
-
   return (
     <motion.div whileHover={{ y: -6 }} className="group relative bg-[#161616] border border-amber-500/10 rounded-lg overflow-hidden">
       <Link href={`/urunler/${product.slug}`} className="block">
@@ -106,9 +96,6 @@ export function ProductCard({ product }) {
           {product.isBestseller && <span className="bg-red-700 text-amber-50 text-[10px] font-bold tracking-widest px-2 py-1">ÇOK SATAN</span>}
           {product.discount > 0 && <span className="bg-emerald-700 text-amber-50 text-[10px] font-bold tracking-widest px-2 py-1">%{product.discount}</span>}
         </div>
-        <button onClick={toggleFav} className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all duration-300 ${isFav ? 'bg-red-500/20 text-red-400 opacity-100' : 'bg-black/40 text-amber-100/50 opacity-0 group-hover:opacity-100'}`}>
-          <Heart size={16} fill={isFav ? 'currentColor' : 'none'}/>
-        </button>
         <div className="p-5">
           <h3 className="font-serif text-amber-50 text-lg group-hover:text-amber-400 transition truncate">{product.name}</h3>
           <div className="flex items-center gap-1 mt-2">
@@ -121,7 +108,7 @@ export function ProductCard({ product }) {
           </div>
         </div>
       </Link>
-      <button onClick={() => { add(product); toast.success('Sepete eklendi'); }} className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold py-3 font-serif tracking-widest translate-y-full group-hover:translate-y-0 transition duration-300">
+      <button onClick={() => add(product)} className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold py-3 font-serif tracking-widest translate-y-full group-hover:translate-y-0 transition duration-300">
         SEPETE EKLE
       </button>
     </motion.div>
@@ -217,7 +204,7 @@ function Testimonials({ data }) {
           {(data?.items || []).map((t, i) => (
             <div key={i} className="bg-[#161616] border border-amber-500/10 p-8 rounded-lg text-left">
               <div className="flex gap-1 mb-4">{[...Array(t.rating)].map((_, i) => <Star key={i} size={16} className="text-amber-500 fill-amber-500"/>)}</div>
-              <p className="text-amber-100/80 italic font-serif text-lg leading-relaxed">"{t.text}"</p>
+              <p className="text-amber-100/80 italic font-serif text-lg leading-relaxed">“{t.text}”</p>
               <p className="mt-6 text-amber-400 tracking-widest text-sm">— {t.name}</p>
             </div>
           ))}
@@ -283,12 +270,18 @@ function UserPhotos({ data }) {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {items.map((item, i) => (
             <div key={i} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-amber-500/10 group">
-              <img src={item.image} alt={item.name || 'Müşteri fotoğrafı'} className="w-full h-full object-cover object-top group-hover:scale-105 transition duration-700"/>
+              <img
+                src={item.image}
+                alt={item.name || 'Müşteri fotoğrafı'}
+                className="w-full h-full object-cover object-top group-hover:scale-105 transition duration-700"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition duration-300"/>
               {item.name && (
                 <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition duration-300">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center text-black font-bold text-xs shrink-0">{item.name[0].toUpperCase()}</div>
+                    <div className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center text-black font-bold text-xs shrink-0">
+                      {item.name[0].toUpperCase()}
+                    </div>
                     <span className="text-amber-50 text-sm font-serif">{item.name}</span>
                   </div>
                 </div>
@@ -298,7 +291,12 @@ function UserPhotos({ data }) {
         </div>
         {data?.instagramUrl && (
           <div className="text-center mt-10">
-            <a href={data.instagramUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border border-amber-500/40 px-8 py-3 text-amber-100 font-serif tracking-widest hover:bg-amber-500/10 transition">
+            <a
+              href={data.instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 border border-amber-500/40 px-8 py-3 text-amber-100 font-serif tracking-widest hover:bg-amber-500/10 transition"
+            >
               Topluluğa Göz At
             </a>
           </div>
@@ -307,3 +305,4 @@ function UserPhotos({ data }) {
     </section>
   );
 }
+

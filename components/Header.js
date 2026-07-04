@@ -83,13 +83,13 @@ export default function Header({ settings }) {
                 onMouseLeave={() => { catTimer.current = setTimeout(() => setCatOpen(false), 150); }}
               >
                 <button onClick={() => setCatOpen(v => !v)} className="flex items-center gap-1 text-amber-100/80 hover:text-amber-400 transition-colors font-serif text-sm tracking-widest uppercase">
-                  Tum Urunler
+                  Tüm Ürünler
                   <ChevronDown size={14} className={`transition-transform duration-200 ${catOpen ? 'rotate-180' : ''}`}/>
                 </button>
                 {catOpen && (
                   <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-56 bg-[#0d0d0d] border border-amber-500/20 rounded-lg shadow-2xl overflow-hidden z-50">
                     <div className="p-2">
-                      <Link href="/urunler" onClick={() => setCatOpen(false)} className="block px-4 py-2.5 text-amber-100/80 hover:text-amber-400 hover:bg-amber-500/5 rounded font-serif text-sm tracking-widest uppercase transition-colors">Tum Urunler</Link>
+                      <Link href="/urunler" onClick={() => setCatOpen(false)} className="block px-4 py-2.5 text-amber-100/80 hover:text-amber-400 hover:bg-amber-500/5 rounded font-serif text-sm tracking-widest uppercase transition-colors">Tüm Ürünler</Link>
                       {categories.length > 0 && <div className="my-2 border-t border-amber-500/10"/>}
                       {categories.map((cat) => (
                         <Link key={cat.id} href={`/urunler?kategori=${cat.slug}`} onClick={() => setCatOpen(false)} className="block px-4 py-2.5 text-amber-100/60 hover:text-amber-400 hover:bg-amber-500/5 rounded font-serif text-sm tracking-widest uppercase transition-colors">{cat.name}</Link>
@@ -101,7 +101,7 @@ export default function Header({ settings }) {
 
               <Link href="/blog" className="text-amber-100/80 hover:text-amber-400 transition-colors font-serif text-sm tracking-widest uppercase">Blog</Link>
               <Link href="/hakkimizda" className="text-amber-100/80 hover:text-amber-400 transition-colors font-serif text-sm tracking-widest uppercase">Hikayemiz</Link>
-              <Link href="/iletisim" className="text-amber-100/80 hover:text-amber-400 transition-colors font-serif text-sm tracking-widest uppercase">Iletisim</Link>
+              <Link href="/iletisim" className="text-amber-100/80 hover:text-amber-400 transition-colors font-serif text-sm tracking-widest uppercase">İletişim</Link>
             </nav>
 
             <div className="flex items-center gap-2 sm:gap-4">
@@ -116,7 +116,7 @@ export default function Header({ settings }) {
                   {dropdownOpen && (
                     <div className="absolute right-0 top-full mt-2 w-56 bg-[#161616] border border-amber-500/20 rounded-lg shadow-2xl shadow-black/50 overflow-hidden z-50">
                       <div className="px-4 py-3 border-b border-amber-500/10">
-                        <p className="text-amber-50 text-sm font-serif font-medium truncate">{user.name || 'Kullanici'}</p>
+                        <p className="text-amber-50 text-sm font-serif font-medium truncate">{user.name || 'Kullanıcı'}</p>
                         <p className="text-amber-100/40 text-xs truncate">{user.email}</p>
                       </div>
                       <div className="py-1">
