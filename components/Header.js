@@ -137,18 +137,18 @@ export default function Header({ settings }) {
                   )}
                 </div>
               ) : (
-                <Link href="/giris" className="p-2 text-amber-100 hover:text-amber-400 transition">
-                  <User size={20}/>
+                <Link href="/giris" className="p-3 text-amber-100 hover:text-amber-400 transition">
+                  <User size={22}/>
                 </Link>
               )}
-              <button onClick={open} className="p-2 text-amber-100 hover:text-amber-400 transition relative">
-                <ShoppingCart size={20}/>
+              <button onClick={open} className="p-3 text-amber-100 hover:text-amber-400 transition relative">
+                <ShoppingCart size={22}/>
                 {count > 0 && (
                   <span className="absolute -top-1 -right-1 bg-amber-500 text-black text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">{count}</span>
                 )}
               </button>
-              <button onClick={() => setMobileOpen(true)} className="lg:hidden p-2 text-amber-100">
-                <Menu size={22}/>
+              <button onClick={() => setMobileOpen(true)} className="lg:hidden p-3 text-amber-100 -mr-1">
+                <Menu size={24}/>
               </button>
             </div>
           </div>
@@ -156,21 +156,20 @@ export default function Header({ settings }) {
       </header>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-[60] bg-[#0d0d0d] lg:hidden">
-          <div className="flex items-center justify-between p-4 border-b border-amber-500/20">
+        <div className="fixed inset-0 z-[60] bg-[#0d0d0d] lg:hidden flex flex-col">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-amber-500/20 shrink-0">
             <Logo showText={true}/>
-            <button onClick={() => setMobileOpen(false)} className="p-2 text-amber-100"><X size={24}/></button>
+            <button onClick={() => setMobileOpen(false)} className="p-3 text-amber-100"><X size={26}/></button>
           </div>
-          <div className="flex flex-col p-6 gap-2">
-            <Link href="/" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 pb-4 mb-2">Anasayfa</Link>
-            <Link href="/urunler" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider pb-2">Tüm Ürünler</Link>
+          <div className="flex flex-col px-6 py-4 gap-1 overflow-y-auto flex-1">
+            <Link href="/" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 py-4">Anasayfa</Link>
+            <Link href="/urunler" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider py-4 border-b border-amber-500/10">Tüm Ürünler</Link>
             {categories.map((cat) => (
-              <Link key={cat.id} href={`/urunler?kategori=${cat.slug}`} onClick={() => setMobileOpen(false)} className="text-amber-100/60 font-serif text-base tracking-wider pl-4 pb-2">{cat.name}</Link>
+              <Link key={cat.id} href={`/urunler?kategori=${cat.slug}`} onClick={() => setMobileOpen(false)} className="text-amber-100/60 font-serif text-base tracking-wider pl-6 py-3 border-b border-amber-500/5">{cat.name}</Link>
             ))}
-            <div className="border-b border-amber-500/10 my-2"/>
-            <Link href="/blog" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 pb-4">Blog</Link>
-            <Link href="/hakkimizda" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 pb-4">Hikayemiz</Link>
-            <Link href="/iletisim" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 pb-4">İletişim</Link>
+            <Link href="/blog" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 py-4">Blog</Link>
+            <Link href="/hakkimizda" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 py-4">Hikayemiz</Link>
+            <Link href="/iletisim" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 py-4">İletişim</Link>
             {user && (
               <div className="border-t border-amber-500/20 pt-4 mt-2">
                 {menuItems.map((item) => (
