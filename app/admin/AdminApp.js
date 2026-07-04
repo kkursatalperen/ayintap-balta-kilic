@@ -110,7 +110,7 @@ export default function AdminApp() {
           {tab === 'blog' && <BlogAdmin/>}
           {tab === 'categories' && <CategoriesTab/>}
           {tab === 'settings' && <SiteSettings/>}
-          {tab === 'users' && <UsersPanel/>}
+          {tab === 'users' && <UsersTab/>}
         </AdminErrorBoundary>
       </main>
     </div>
