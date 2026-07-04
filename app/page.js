@@ -1,7 +1,7 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HomepageRenderer from '@/components/HomepageRenderer';
-import MediaSection from '@/components/MediaSection';
+
 
 async function fetchData() {
   const base = process.env.NEXT_PUBLIC_BASE_URL || '';
@@ -23,7 +23,6 @@ export default async function Home() {
       <Header settings={settings}/>
       <main>
         <HomepageRenderer sections={sections}/>
-       <MediaSection/>
       </main>
       <Footer settings={settings}/>
     </>

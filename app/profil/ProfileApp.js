@@ -32,7 +32,7 @@ export default function ProfileApp() {
     router.push('/');
   };
 
-  if (loading) return <main className="pt-32 min-h-screen text-center text-amber-100/50">YÃ¼kleniyor...</main>;
+  if (loading) return <main className="pt-32 min-h-screen text-center text-amber-100/50">Yükleniyor...</main>;
 
   return (
     <main className="pt-28 pb-20 min-h-screen">
@@ -214,14 +214,15 @@ function FavoritesTab() {
   useEffect(() => { load(); }, []);
   const remove = async (productId) => {
     await fetch('/api/me/favorites', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productId }) });
-    toast.success('Favorilerden Ã§Ä±karÄ±ldÄ±'); load();
+    toast.success('Favorilerden Çıkarıldı'); load();
   };
-  if (loading) return <div className="text-amber-100/50">YÃ¼kleniyor...</div>;
+  if (loading) return <div className="text-amber-100/50">Yükleniyor...</div>;
   if (favs.length === 0) return (
     <div className="bg-[#161616] border border-amber-500/20 rounded-lg p-12 text-center">
-      <Heart className="mx-auto text-amber-500/40 mb-4" size={48}/>
-      <p className="text-amber-100/60 font-serif text-lg">Favorilerin boş</p>
-      <Link href="/urunler" className="inline-block mt-4 text-amber-400 hover:underline">Ürünleri keşfet</Link>
+      <Heart className="mx-auto text-amber-500/30 mb-6" size={80}/>
+      <h2 className="font-serif text-3xl text-amber-100/60 mb-3">Favorileriniz Boş</h2>
+      <p className="text-amber-100/40 max-w-sm mx-auto mb-8">Beğendiğiniz eserleri favorilere ekleyerek koleksiyonunuzu oluşturun.</p>
+      <Link href="/urunler" className="inline-block bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-8 py-3 rounded font-serif tracking-widest hover:from-amber-400 hover:to-amber-500 transition">MAĞAZAYA DÖN</Link>
     </div>
   );
   return (
