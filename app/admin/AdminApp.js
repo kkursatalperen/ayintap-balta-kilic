@@ -1465,7 +1465,9 @@ function UserDetail({ user: initialUser, onClose }) {
       </div>
     </div>
   );
-}function CouponsPanel() {
+}
+
+function CouponsPanel() {
   const [coupons, setCoupons] = useState([]);
   const [form, setForm] = useState({ code: '', discount: 10, type: 'percent', minOrder: 0, maxUses: 0, expiresAt: '' });
   const [saving, setSaving] = useState(false);
