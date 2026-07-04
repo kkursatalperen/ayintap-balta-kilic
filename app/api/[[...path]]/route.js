@@ -537,6 +537,85 @@ async function route(request, { params }) {
     const all = await col.find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray();
     return json({ orders: all });
   }
+  // ============ ADMIN KULLANICI YÖNETİMİ ============
+  if (path === '/admin/users' && method === 'GET') {
+    const user = await getCurrentUser(request);
+    const auth = requireAdmin(user);
+    if (!auth.ok) return err(auth.msg, auth.status);
+    const url = new URL(request.url);
+    const search = url.searchParams.get('search') || '';
+    const status = url.searchParams.get('status') || '';
+    const col = await getCollection('users');
+    const ordersCol = await getCollection('orders');
+    const filter = {};
+    if (search) filter.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } },
+    ];
+    if (status === 'blocked') filter.isBlocked = true;
+    else if (status === 'active') filter.isBlocked = { $ne: true };
+    const users = await col.find(filter, {
+      projection: { passwordHash: 0, _id: 0 }
+    }).sort({ createdAt: -1 }).limit(200).toArray();
+    // Her kullanıcı için toplam harcama ve sipariş sayısını hesapla
+    const enriched = await Promise.all(users.map(async (u) => {
+      const orders = await ordersCol.aggregate([
+        { $match: { userId: u.id } },
+        { $group: { _id: null, total: { $sum: '$total' }, count: { $sum: 1 } } }
+      ]).toArray();
+      return {
+        ...u,
+        totalSpent: orders[0]?.total || 0,
+        orderCount: orders[0]?.count || 0,
+      };
+    }));
+    return json({ users: enriched });
+  }
+
+  if (path.startsWith('/admin/users/') && method === 'GET') {
+    const user = await getCurrentUser(request);
+    const auth = requireAdmin(user);
+    if (!auth.ok) return err(auth.msg, auth.status);
+    const id = path.split('/').pop();
+    const col = await getCollection('users');
+    const ordersCol = await getCollection('orders');
+    const addressesCol = await getCollection('addresses');
+    const favoritesCol = await getCollection('favorites');
+    const productsCol = await getCollection('products');
+    const u = await col.findOne({ id }, { projection: { passwordHash: 0, _id: 0 } });
+    if (!u) return err('Kullanıcı bulunamadı', 404);
+    const [orders, addresses, favorites] = await Promise.all([
+      ordersCol.find({ userId: id }, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
+      addressesCol.find({ userId: id }, { projection: { _id: 0 } }).toArray(),
+      favoritesCol.find({ userId: id }, { projection: { _id: 0 } }).toArray(),
+    ]);
+    const totalSpent = orders.reduce((s, o) => s + (o.total || 0), 0);
+    const avgOrder = orders.length ? totalSpent / orders.length : 0;
+    const favProducts = favorites.length ? await productsCol.find(
+      { id: { $in: favorites.map(f => f.productId) } },
+      { projection: { _id: 0, id: 1, name: 1, price: 1, images: 1, slug: 1 } }
+    ).toArray() : [];
+    return json({ user: u, orders, addresses, favorites: favProducts, stats: { totalSpent, orderCount: orders.length, avgOrder } });
+  }
+
+  if (path.startsWith('/admin/users/') && method === 'PUT') {
+    const user = await getCurrentUser(request);
+    const auth = requireAdmin(user);
+    if (!auth.ok) return err(auth.msg, auth.status);
+    const id = path.split('/').pop();
+    const body = await readBody(request);
+    const col = await getCollection('users');
+    const allowed = {};
+    if (body.isBlocked !== undefined) allowed.isBlocked = body.isBlocked;
+    if (body.role !== undefined) allowed.role = body.role;
+    if (body.adminNote !== undefined) allowed.adminNote = body.adminNote;
+    if (body.email !== undefined) allowed.email = body.email.toLowerCase();
+    if (body.name !== undefined) allowed.name = body.name;
+    allowed.updatedAt = new Date();
+    await col.updateOne({ id }, { $set: allowed });
+    const u = await col.findOne({ id }, { projection: { passwordHash: 0, _id: 0 } });
+    return json({ user: u });
+  }
   if (path === '/admin/stats' && method === 'GET') {
     const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
     const orders = await getCollection('orders');

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import {
   LayoutDashboard, Package, LayoutGrid, Settings, ShoppingBag, LogOut, Plus, Edit, Trash2,
-  ChevronUp, ChevronDown, Eye, EyeOff, Upload, Save, X, Image as ImageIcon, FileText, Truck, Check,
+  ChevronUp, ChevronDown, Eye, EyeOff, Upload, Save, X, Image as ImageIcon, FileText, Truck, Check, Users, Search, Ban, UserCheck, Mail, Phone, MapPin, Heart, ShoppingCart, Star,
 } from 'lucide-react';
 import Logo from '@/components/Logo';
 import AdminErrorBoundary from '@/components/AdminErrorBoundary';
@@ -82,6 +82,7 @@ export default function AdminApp() {
             { id: 'blog', icon: FileText, label: 'Blog' },
             { id: 'categories', icon: LayoutGrid, label: 'Kategoriler' },
             { id: 'settings', icon: Settings, label: 'Site Ayarları' },
+            { id: 'users', icon: Users, label: 'Üyeler' },
           ].map((t) => (
             <button key={t.id} onClick={() => { setTab(t.id); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-serif tracking-wider transition ${tab === t.id ? 'bg-amber-500/10 text-amber-400 border-l-2 border-amber-500' : 'text-amber-100/70 hover:bg-amber-500/5'}`}>
@@ -108,6 +109,7 @@ export default function AdminApp() {
           {tab === 'blog' && <BlogAdmin/>}
           {tab === 'categories' && <CategoriesTab/>}
           {tab === 'settings' && <SiteSettings/>}
+          {tab === 'users' && <UsersPanel/>}
         </AdminErrorBoundary>
       </main>
     </div>
@@ -1011,4 +1013,401 @@ function SiteSettings() {
       </button>
     </div>
   );
+function UsersPanel() {
+  const [users, setUsers] = useState([]);
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
+
+  const load = async () => {
+    setLoading(true);
+    const qs = new URLSearchParams();
+    if (search) qs.set('search', search);
+    if (status) qs.set('status', status);
+    const res = await fetch(`/api/admin/users?${qs}`);
+    const d = await res.json();
+    setUsers(d.users || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const totalUsers = users.length;
+  const blockedUsers = users.filter(u => u.isBlocked).length;
+  const thisMonth = users.filter(u => {
+    const d = new Date(u.createdAt);
+    const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+  const topSpenders = [...users].sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 5);
+
+  return (
+    <div className="p-10">
+      <h1 className="font-serif text-4xl text-amber-50 mb-2">Üye Yönetimi</h1>
+      <p className="text-amber-100/50 mb-8">Tüm üyeleri görüntüle, düzenle ve yönet</p>
+
+      {/* Metrikler */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {[
+          { label: 'Toplam Üye', value: totalUsers, color: 'from-amber-500 to-amber-700' },
+          { label: 'Bu Ay Yeni', value: thisMonth, color: 'from-emerald-600 to-emerald-800' },
+          { label: 'Engellenmiş', value: blockedUsers, color: 'from-red-600 to-red-800' },
+          { label: 'En Yüksek Harcama', value: topSpenders[0] ? topSpenders[0].totalSpent.toLocaleString('tr-TR') + '₺' : '0₺', color: 'from-purple-600 to-purple-800' },
+        ].map((s, i) => (
+          <div key={i} className="bg-[#161616] border border-amber-500/10 rounded-lg p-5">
+            <div className={`w-12 h-1 bg-gradient-to-r ${s.color} mb-3`}/>
+            <p className="text-amber-100/60 text-xs tracking-widest">{s.label}</p>
+            <p className="font-serif text-2xl text-amber-50 mt-1">{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Top 5 Harcama */}
+      {topSpenders.length > 0 && (
+        <div className="bg-[#161616] border border-amber-500/10 rounded-lg p-5 mb-6">
+          <h3 className="font-serif text-amber-400 text-sm tracking-widest mb-4">EN ÇOK HARCAMA YAPAN 5 MÜŞTERİ</h3>
+          <div className="space-y-2">
+            {topSpenders.map((u, i) => (
+              <div key={u.id} className="flex items-center gap-3">
+                <span className="text-amber-500 font-serif w-5">{i + 1}.</span>
+                <div className="flex-1">
+                  <span className="text-amber-100 text-sm">{u.name || u.email}</span>
+                  <span className="text-amber-100/40 text-xs ml-2">{u.email}</span>
+                </div>
+                <span className="text-amber-400 font-serif text-sm">{u.totalSpent.toLocaleString('tr-TR')}₺</span>
+                <span className="text-amber-100/40 text-xs">{u.orderCount} sipariş</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Arama ve Filtre */}
+      <div className="flex gap-3 mb-6">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500/50" size={16}/>
+          <input
+            className="w-full bg-black/40 border border-amber-500/30 rounded pl-9 pr-4 py-2.5 text-amber-50 focus:outline-none focus:border-amber-500 text-sm"
+            placeholder="İsim veya e-posta ara..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && load()}
+          />
+        </div>
+        <select value={status} onChange={(e) => setStatus(e.target.value)} className="bg-black/40 border border-amber-500/30 rounded px-3 py-2.5 text-amber-50 text-sm focus:outline-none focus:border-amber-500">
+          <option value="">Tüm Durumlar</option>
+          <option value="active">Aktif</option>
+          <option value="blocked">Engellenmiş</option>
+        </select>
+        <button onClick={load} className="bg-amber-500 text-black font-bold px-4 py-2.5 rounded font-serif tracking-widest text-sm hover:bg-amber-400 transition">ARA</button>
+      </div>
+
+      {/* Kullanıcı Listesi */}
+      {loading ? (
+        <div className="text-amber-100/50 text-center py-10">Yükleniyor...</div>
+      ) : (
+        <div className="bg-[#161616] border border-amber-500/10 rounded-lg overflow-x-auto">
+          <table className="w-full min-w-[700px]">
+            <thead className="bg-black/30 border-b border-amber-500/10">
+              <tr className="text-left text-xs text-amber-400 font-serif tracking-widest">
+                <th className="p-4">ÜYE</th>
+                <th className="p-4">KAYIT TARİHİ</th>
+                <th className="p-4">SİPARİŞ</th>
+                <th className="p-4">TOPLAM HARCAMA</th>
+                <th className="p-4">DURUM</th>
+                <th className="p-4">İŞLEM</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.length === 0 && (
+                <tr><td colSpan={6} className="p-10 text-center text-amber-100/50">Üye bulunamadı.</td></tr>
+              )}
+              {users.map((u) => (
+                <tr key={u.id} className="border-b border-amber-500/5 hover:bg-amber-500/5">
+                  <td className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-black font-bold text-xs shrink-0">
+                        {(u.name || u.email || '?')[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-amber-100 text-sm font-medium">{u.name || 'İsimsiz'}</p>
+                        <p className="text-amber-100/40 text-xs">{u.email}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="p-4 text-amber-100/60 text-xs">{new Date(u.createdAt).toLocaleDateString('tr-TR')}</td>
+                  <td className="p-4 text-amber-100">{u.orderCount}</td>
+                  <td className="p-4 text-amber-400 font-serif">{u.totalSpent.toLocaleString('tr-TR')}₺</td>
+                  <td className="p-4">
+                    <span className={`text-xs px-2 py-1 rounded ${u.isBlocked ? 'bg-red-700/30 text-red-300' : u.role !== 'customer' ? 'bg-purple-700/30 text-purple-300' : 'bg-emerald-700/30 text-emerald-300'}`}>
+                      {u.isBlocked ? 'Engellenmiş' : u.role !== 'customer' ? 'Yönetici' : 'Aktif'}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <button onClick={() => setSelected(u)} className="text-amber-400 hover:text-amber-300 text-xs font-serif tracking-widest border border-amber-500/30 px-3 py-1.5 rounded hover:bg-amber-500/10 transition">
+                      DETAY
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {selected && <UserDetail user={selected} onClose={() => { setSelected(null); load(); }}/>}
+    </div>
+  );
 }
+
+function UserDetail({ user: initialUser, onClose }) {
+  const [user, setUser] = useState(initialUser);
+  const [detail, setDetail] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [note, setNote] = useState(initialUser.adminNote || '');
+  const [activeTab, setActiveTab] = useState('orders');
+
+  useEffect(() => {
+    fetch(`/api/admin/users/${user.id}`)
+      .then(r => r.json())
+      .then(d => { setDetail(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [user.id]);
+
+  const save = async (updates) => {
+    setSaving(true);
+    const res = await fetch(`/api/admin/users/${user.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    const d = await res.json();
+    if (d.user) setUser(d.user);
+    setSaving(false);
+  };
+
+  const toggleBlock = () => {
+    if (!confirm(user.isBlocked ? 'Üyenin engeli kaldırılsın mı?' : 'Üye engellensin mi?')) return;
+    save({ isBlocked: !user.isBlocked });
+  };
+
+  const STATUS_MAP = {
+    pending_payment: 'Ödeme Bekliyor',
+    paid: 'Ödeme Alındı',
+    preparing: 'Hazırlanıyor',
+    shipped: 'Kargoya Verildi',
+    delivered: 'Teslim Edildi',
+    cancelled: 'İptal Edildi',
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 overflow-y-auto p-6">
+      <div className="max-w-4xl mx-auto bg-[#161616] border border-amber-500/30 rounded-lg">
+
+        {/* Header */}
+        <div className="flex justify-between items-start p-6 border-b border-amber-500/20 sticky top-0 bg-[#161616] z-10">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-black font-bold text-xl">
+              {(user.name || user.email || '?')[0].toUpperCase()}
+            </div>
+            <div>
+              <h2 className="font-serif text-2xl text-amber-50">{user.name || 'İsimsiz Üye'}</h2>
+              <p className="text-amber-100/50 text-sm">{user.email}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className={`text-xs px-2 py-0.5 rounded ${user.isBlocked ? 'bg-red-700/30 text-red-300' : 'bg-emerald-700/30 text-emerald-300'}`}>
+                  {user.isBlocked ? 'Engellenmiş' : 'Aktif'}
+                </span>
+                <span className="text-xs px-2 py-0.5 rounded bg-purple-700/30 text-purple-300">{user.role}</span>
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose}><X size={22} className="text-amber-100"/></button>
+        </div>
+
+        {/* İstatistikler */}
+        {detail && (
+          <div className="grid grid-cols-3 gap-4 p-6 border-b border-amber-500/10">
+            <div className="bg-black/30 rounded-lg p-4 text-center">
+              <p className="font-serif text-2xl text-amber-400">{detail.stats?.orderCount || 0}</p>
+              <p className="text-xs text-amber-100/50 mt-1">Toplam Sipariş</p>
+            </div>
+            <div className="bg-black/30 rounded-lg p-4 text-center">
+              <p className="font-serif text-2xl text-amber-400">{(detail.stats?.totalSpent || 0).toLocaleString('tr-TR')}₺</p>
+              <p className="text-xs text-amber-100/50 mt-1">Toplam Harcama (LTV)</p>
+            </div>
+            <div className="bg-black/30 rounded-lg p-4 text-center">
+              <p className="font-serif text-2xl text-amber-400">{(detail.stats?.avgOrder || 0).toLocaleString('tr-TR')}₺</p>
+              <p className="text-xs text-amber-100/50 mt-1">Ortalama Sepet</p>
+            </div>
+          </div>
+        )}
+
+        {/* Sekmeler */}
+        <div className="flex gap-1 px-6 pt-4 border-b border-amber-500/10">
+          {[
+            { id: 'orders', label: 'Siparişler' },
+            { id: 'addresses', label: 'Adresler' },
+            { id: 'favorites', label: 'Favoriler' },
+            { id: 'actions', label: 'Yönetici İşlemleri' },
+          ].map((t) => (
+            <button key={t.id} onClick={() => setActiveTab(t.id)}
+              className={`px-4 py-2 text-sm font-serif tracking-widest rounded-t transition ${activeTab === t.id ? 'bg-amber-500/10 text-amber-400 border-b-2 border-amber-500' : 'text-amber-100/50 hover:text-amber-100'}`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="p-6">
+          {loading && <div className="text-amber-100/50 text-center py-8">Yükleniyor...</div>}
+
+          {/* Siparişler */}
+          {!loading && activeTab === 'orders' && (
+            <div>
+              <h3 className="font-serif text-amber-400 text-sm tracking-widest mb-4">SİPARİŞ GEÇMİŞİ</h3>
+              {(detail?.orders || []).length === 0 ? (
+                <p className="text-amber-100/40 text-sm">Henüz sipariş yok.</p>
+              ) : (
+                <div className="space-y-3">
+                  {(detail?.orders || []).map((o) => (
+                    <div key={o.id} className="bg-black/30 border border-amber-500/10 rounded-lg p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-mono text-amber-400 text-sm">{o.orderNumber}</p>
+                          <p className="text-xs text-amber-100/40 mt-1">{new Date(o.createdAt).toLocaleString('tr-TR')}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-serif text-amber-400">{(o.total || 0).toLocaleString('tr-TR')}₺</p>
+                          <span className="text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 mt-1 inline-block">
+                            {STATUS_MAP[o.status] || o.status}
+                          </span>
+                        </div>
+                      </div>
+                      {o.trackingCode && (
+                        <p className="text-xs text-amber-100/50 mt-2">Kargo Takip: <span className="font-mono text-amber-400">{o.trackingCode}</span> {o.trackingCarrier && `(${o.trackingCarrier})`}</p>
+                      )}
+                      <div className="mt-3 space-y-1">
+                        {(o.items || []).map((item, i) => (
+                          <p key={i} className="text-xs text-amber-100/60">{item.name} × {item.qty} — {((item.price + (item.personalizationPrice || 0)) * item.qty).toLocaleString('tr-TR')}₺</p>
+                        ))}
+                      </div>
+                      {o.shippingAddress && (
+                        <div className="mt-3 text-xs text-amber-100/40 border-t border-amber-500/10 pt-2">
+                          <p className="flex items-center gap-1"><MapPin size={10} className="text-amber-500"/> {o.shippingAddress.addressLine}, {o.shippingAddress.district} / {o.shippingAddress.city}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Adresler */}
+          {!loading && activeTab === 'addresses' && (
+            <div>
+              <h3 className="font-serif text-amber-400 text-sm tracking-widest mb-4">KAYITLI ADRESLER</h3>
+              {(detail?.addresses || []).length === 0 ? (
+                <p className="text-amber-100/40 text-sm">Kayıtlı adres yok.</p>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-3">
+                  {(detail?.addresses || []).map((a) => (
+                    <div key={a.id} className="bg-black/30 border border-amber-500/10 rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-serif text-amber-100">{a.title}</h4>
+                        {a.isDefault && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">Varsayılan</span>}
+                      </div>
+                      <p className="text-sm text-amber-100/70">{a.fullName}</p>
+                      <p className="text-xs text-amber-100/50">{a.phone}</p>
+                      <p className="text-xs text-amber-100/50 mt-1">{a.addressLine}</p>
+                      <p className="text-xs text-amber-100/50">{a.district} / {a.city} {a.zipCode}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Favoriler */}
+          {!loading && activeTab === 'favorites' && (
+            <div>
+              <h3 className="font-serif text-amber-400 text-sm tracking-widest mb-4">FAVORİ ÜRÜNLER</h3>
+              {(detail?.favorites || []).length === 0 ? (
+                <p className="text-amber-100/40 text-sm">Favori ürün yok.</p>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {(detail?.favorites || []).map((p) => (
+                    <div key={p.id} className="bg-black/30 border border-amber-500/10 rounded-lg overflow-hidden">
+                      {p.images?.[0] && <img src={p.images[0]} className="w-full h-24 object-cover"/>}
+                      <div className="p-3">
+                        <p className="text-amber-100 text-sm font-serif truncate">{p.name}</p>
+                        <p className="text-amber-400 text-sm mt-1">{p.price?.toLocaleString('tr-TR')}₺</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Yönetici İşlemleri */}
+          {!loading && activeTab === 'actions' && (
+            <div className="space-y-6">
+              {/* Admin Notu */}
+              <div>
+                <h3 className="font-serif text-amber-400 text-sm tracking-widest mb-3">YÖNETİCİ NOTU</h3>
+                <textarea
+                  rows={4}
+                  className="w-full bg-black/40 border border-amber-500/30 rounded px-4 py-3 text-amber-50 focus:outline-none focus:border-amber-500 text-sm"
+                  placeholder="Bu üye hakkında not ekle (sadece yöneticiler görebilir)..."
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+                <button onClick={() => save({ adminNote: note })} disabled={saving} className="mt-2 bg-amber-500 text-black font-bold px-4 py-2 rounded font-serif tracking-widest text-sm hover:bg-amber-400 transition disabled:opacity-50">
+                  {saving ? 'KAYDEDİLİYOR...' : 'NOTU KAYDET'}
+                </button>
+                {user.adminNote && (
+                  <div className="mt-3 p-3 bg-amber-500/5 border border-amber-500/20 rounded text-sm text-amber-100/70">
+                    <p className="text-xs text-amber-400 mb-1">Mevcut Not:</p>
+                    {user.adminNote}
+                  </div>
+                )}
+              </div>
+
+              {/* Rol Değiştir */}
+              <div>
+                <h3 className="font-serif text-amber-400 text-sm tracking-widest mb-3">ROL DEĞİŞTİR</h3>
+                <select
+                  value={user.role}
+                  onChange={(e) => save({ role: e.target.value })}
+                  className="bg-black/40 border border-amber-500/30 rounded px-4 py-2.5 text-amber-50 text-sm focus:outline-none focus:border-amber-500"
+                >
+                  <option value="customer">Müşteri</option>
+                  <option value="editor">Editör</option>
+                  <option value="admin">Admin</option>
+                  <option value="super_admin">Süper Admin</option>
+                </select>
+              </div>
+
+              {/* Engelle/Engeli Kaldır */}
+              <div>
+                <h3 className="font-serif text-amber-400 text-sm tracking-widest mb-3">HESAP DURUMU</h3>
+                <button
+                  onClick={toggleBlock}
+                  disabled={saving}
+                  className={`flex items-center gap-2 px-5 py-3 rounded font-serif tracking-widest text-sm font-bold transition ${user.isBlocked ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-red-600 hover:bg-red-500 text-white'}`}
+                >
+                  {user.isBlocked ? <><UserCheck size={16}/> ENGELİ KALDIR</> : <><Ban size={16}/> HESABI ENGELLE</>}
+                </button>
+                {user.isBlocked && <p className="text-xs text-red-400 mt-2">Bu hesap engellenmiş — giriş yapamaz.</p>}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+}
+
