@@ -37,9 +37,42 @@ export default function Footer({ settings }) {
             </ul>
           </div>
         </div>
-        <div className="mt-12 pt-6 border-t border-amber-500/10 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-amber-100/40">
-          <p>© {new Date().getFullYear()} {s.brandName || 'Ayıntap Balta Kılıç'}. Tüm hakları saklıdır.</p>
-          <p className="font-serif tracking-wider text-amber-500/60">Örsün Üzerinde Dövülen Miras</p>
+        {/* Güven Rozetleri */}
+        <div className="mt-12 pt-8 border-t border-amber-500/10">
+          <div className="flex flex-wrap justify-center gap-6 mb-8">
+            <div className="flex items-center gap-2 bg-amber-500/5 border border-amber-500/15 rounded-lg px-4 py-3">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-emerald-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <div>
+                <p className="text-amber-50 text-xs font-serif">256-Bit SSL</p>
+                <p className="text-amber-100/40 text-[10px]">Güvenli Bağlantı</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 bg-amber-500/5 border border-amber-500/15 rounded-lg px-4 py-3">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+              <div>
+                <p className="text-amber-50 text-xs font-serif">Güvenli Ödeme</p>
+                <p className="text-amber-100/40 text-[10px]">3D Secure Korumalı</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 bg-amber-500/5 border border-amber-500/15 rounded-lg px-4 py-3">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-400"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              <div>
+                <p className="text-amber-50 text-xs font-serif">İade Garantisi</p>
+                <p className="text-amber-100/40 text-[10px]">14 Gün İade Hakkı</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 bg-amber-500/5 border border-amber-500/15 rounded-lg px-4 py-3">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-400"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              <div>
+                <p className="text-amber-50 text-xs font-serif">Kredi Kartı</p>
+                <p className="text-amber-100/40 text-[10px]">Visa / Mastercard</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-amber-100/40">
+            <p>© {new Date().getFullYear()} {s.brandName || 'Ayıntap Balta Kılıç'}. Tüm hakları saklıdır.</p>
+            <p className="font-serif tracking-wider text-amber-500/60">Örsün Üzerinde Dövülen Miras</p>
+          </div>
         </div>
       </div>
       {s.whatsapp && (
