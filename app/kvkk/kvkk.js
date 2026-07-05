@@ -18,7 +18,7 @@ export default function KvkkPage() {
           <Section title="1. Veri Sorumlusu">
             <p>
               6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca kişisel verileriniz;
-              veri sorumlusu sıfatıyla <strong className="text-amber-400">Ayıntap Balta Kılıç</strong> tarafından
+              veri sorumlusu sıfatıyla <strong className="text-amber-400">Ayıntap Kılıç</strong> tarafından
               aşağıda açıklanan kapsamda işlenmektedir.
             </p>
           </Section>
@@ -81,8 +81,8 @@ export default function KvkkPage() {
               aşağıdaki kanallar aracılığıyla bize başvurabilirsiniz:
             </p>
             <ul className="list-disc list-inside space-y-2 text-amber-100/70 mt-3">
-              <li><strong className="text-amber-100/90">E-posta:</strong> [info@ayintapilic.com]</li>
-              <li><strong className="text-amber-100/90">Posta:</strong> [Şirket Adresi, Gaziantep]</li>
+              <li><strong className="text-amber-100/90">E-posta:</strong> [info@ayintapkilic.com]</li>
+              <li><strong className="text-amber-100/90">Posta:</strong> [Güneş Mahallesi 79012 Sokak No 9 Şahinbey / Gaziantep, Gaziantep]</li>
             </ul>
             <p className="mt-3">
               Başvurularınız, niteliğine göre en kısa sürede ve her hâlükârda <strong className="text-amber-400">30 gün içinde</strong> ücretsiz

@@ -23,7 +23,7 @@ export default function MesafeliSatisPage() {
               Unvan: Ayıntap Kılıç<br />
               Adres: [Güneş Mahallesi 79012 Sokak No 9 Şahinbey / Gaziantep, Gaziantep]<br />
               Telefon: [+90 505 547 94 42]<br />
-              E-posta: [info@ayintapilic.com]<br />
+              E-posta: [info@ayintapkilic.com]<br />
               Vergi Dairesi / No: [Şahinbey] / [9391337177]
             </p>
             <p className="mt-4"><strong className="text-amber-400">ALICI:</strong></p>
