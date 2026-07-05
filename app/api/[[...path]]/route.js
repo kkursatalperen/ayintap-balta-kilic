@@ -34,10 +34,10 @@ async function route(request, { params }) {
   // ============ AUTH ============
   if (path === '/auth/register' && method === 'POST') {
     const { email, password, name, phone } = await readBody(request);
-    if (!email || !password) return err('Email ve ÅŸifre zorunlu', 400);
+    if (!email || !password) return err('Email ve Ãƒâ€¦Ã…Â¸ifre zorunlu', 400);
     const users = await getCollection('users');
     const existing = await users.findOne({ email: email.toLowerCase() });
-    if (existing) return err('Bu e-posta zaten kayÄ±tlÄ±', 409);
+    if (existing) return err('Bu e-posta zaten kayÃƒâ€Ã‚Â±tlÃƒâ€Ã‚Â±', 409);
     const hash = await hashPassword(password);
     const user = { id: uuid(), email: email.toLowerCase(), name: name || '', phone: phone || '', passwordHash: hash, role: 'customer', isActive: true, createdAt: new Date() };
     await users.insertOne(user);
@@ -45,15 +45,16 @@ async function route(request, { params }) {
     const safe = { id: user.id, email: user.email, name: user.name, phone: user.phone, role: user.role };
     const res = json({ user: safe, token });
     res.cookies.set('auth_token', token, { httpOnly: true, sameSite: 'lax', maxAge: 60 * 60 * 24 * 7, path: '/' });
+    try { await sendWelcomeEmail({ to: user.email, name: user.name }); } catch (e) { console.error('[EMAIL] welcome failed:', e?.message || e); }
     return res;
   }
   if (path === '/auth/login' && method === 'POST') {
     const { email, password } = await readBody(request);
     const users = await getCollection('users');
     const user = await users.findOne({ email: (email || '').toLowerCase() });
-    if (!user) return err('KullanÄ±cÄ± bulunamadÄ±', 404);
+    if (!user) return err('KullanÃƒâ€Ã‚Â±cÃƒâ€Ã‚Â± bulunamadÃƒâ€Ã‚Â±', 404);
     const ok = await comparePassword(password, user.passwordHash);
-    if (!ok) return err('Åifre hatalÄ±', 401);
+    if (!ok) return err('Ãƒâ€¦Ã‚Âifre hatalÃƒâ€Ã‚Â±', 401);
     const token = signToken({ id: user.id, role: user.role });
     const safe = { id: user.id, email: user.email, name: user.name, phone: user.phone, role: user.role };
     const res = json({ user: safe, token });
@@ -172,7 +173,7 @@ async function route(request, { params }) {
     const slug = path.split('/').pop();
     const col = await getCollection('products');
     const p = await col.findOne({ slug }, { projection: { _id: 0 } });
-    if (!p) return err('ÃœrÃ¼n bulunamadÄ±', 404);
+    if (!p) return err('ÃƒÆ’Ã…â€œrÃƒÆ’Ã‚Â¼n bulunamadÃƒâ€Ã‚Â±', 404);
     return json({ product: p });
   }
   if (path === '/admin/products' && method === 'POST') {
@@ -264,7 +265,7 @@ async function route(request, { params }) {
       statusHistory: [{ status: 'pending_payment', at: new Date(), note: 'Siparis olusturuldu' }],
       createdAt: new Date()
     };
-    // Stok otomatik dÃ¼ÅŸ
+    // Stok otomatik dÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸
     const productsCol = await getCollection('products');
     for (const item of doc.items) {
       await productsCol.updateOne(
@@ -537,7 +538,7 @@ async function route(request, { params }) {
     const all = await col.find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray();
     return json({ orders: all });
   }
-  // ============ ADMIN KULLANICI YÖNETİMİ ============
+  // ============ ADMIN KULLANICI YÃƒâ€“NETÃ„Â°MÃ„Â° ============
   if (path === '/admin/users' && method === 'GET') {
     const user = await getCurrentUser(request);
     const auth = requireAdmin(user);
@@ -557,7 +558,7 @@ async function route(request, { params }) {
     const users = await col.find(filter, {
       projection: { passwordHash: 0, _id: 0 }
     }).sort({ createdAt: -1 }).limit(200).toArray();
-    // Her kullanıcı için toplam harcama ve sipariş sayısını hesapla
+    // Her kullanÃ„Â±cÃ„Â± iÃƒÂ§in toplam harcama ve sipariÃ…Å¸ sayÃ„Â±sÃ„Â±nÃ„Â± hesapla
     const enriched = await Promise.all(users.map(async (u) => {
       const orders = await ordersCol.aggregate([
         { $match: { userId: u.id } },
@@ -583,7 +584,7 @@ async function route(request, { params }) {
     const favoritesCol = await getCollection('favorites');
     const productsCol = await getCollection('products');
     const u = await col.findOne({ id }, { projection: { passwordHash: 0, _id: 0 } });
-    if (!u) return err('Kullanıcı bulunamadı', 404);
+    if (!u) return err('KullanÃ„Â±cÃ„Â± bulunamadÃ„Â±', 404);
     const [orders, addresses, favorites] = await Promise.all([
       ordersCol.find({ userId: id }, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
       addressesCol.find({ userId: id }, { projection: { _id: 0 } }).toArray(),
@@ -616,7 +617,7 @@ async function route(request, { params }) {
     const u = await col.findOne({ id }, { projection: { passwordHash: 0, _id: 0 } });
     return json({ user: u });
   }
-  // ============ KUPON SİSTEMİ ============
+  // ============ KUPON SÃ„Â°STEMÃ„Â° ============
   if (path === '/admin/coupons' && method === 'GET') {
     const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
     const col = await getCollection('coupons');
@@ -657,10 +658,10 @@ async function route(request, { params }) {
     const { code, total } = await readBody(request);
     const col = await getCollection('coupons');
     const coupon = await col.findOne({ code: (code || '').toUpperCase(), isActive: true });
-    if (!coupon) return err('Geçersiz kupon kodu', 404);
-    if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) return err('Kupon süresi dolmuş', 400);
-    if (coupon.maxUses > 0 && coupon.usedCount >= coupon.maxUses) return err('Kupon kullanım limiti doldu', 400);
-    if (coupon.minOrder > 0 && total < coupon.minOrder) return err(`Bu kupon için minimum sipariş tutarı ${coupon.minOrder.toLocaleString('tr-TR')}₺`, 400);
+    if (!coupon) return err('GeÃƒÂ§ersiz kupon kodu', 404);
+    if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) return err('Kupon sÃƒÂ¼resi dolmuÃ…Å¸', 400);
+    if (coupon.maxUses > 0 && coupon.usedCount >= coupon.maxUses) return err('Kupon kullanÃ„Â±m limiti doldu', 400);
+    if (coupon.minOrder > 0 && total < coupon.minOrder) return err(`Bu kupon iÃƒÂ§in minimum sipariÃ…Å¸ tutarÃ„Â± ${coupon.minOrder.toLocaleString('tr-TR')}Ã¢â€šÂº`, 400);
     const discountAmount = coupon.type === 'percent' ? Math.round(total * coupon.discount / 100) : coupon.discount;
     return json({ coupon, discountAmount });
   }
@@ -723,7 +724,7 @@ async function route(request, { params }) {
     await col.deleteOne({ id });
     return json({ ok: true });
   }
-  return err('Endpoint bulunamadÄ±: ' + path, 404);
+  return err('Endpoint bulunamadÃƒâ€Ã‚Â±: ' + path, 404);
   } catch (e) {
     console.error('[API ERROR]', path, method, e);
     return err('Sunucu hatasi olustu, lutfen tekrar deneyin', 500);
