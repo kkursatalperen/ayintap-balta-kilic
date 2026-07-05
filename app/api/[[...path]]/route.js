@@ -9,6 +9,7 @@ import {
   sendOrderStatusUpdateEmail,
   sendPasswordResetEmail,
   sendVerifyEmail,
+  sendWelcomeEmail,
 } from '@/lib/email';
 
 const json = (data, status = 200) => NextResponse.json(data, { status });
