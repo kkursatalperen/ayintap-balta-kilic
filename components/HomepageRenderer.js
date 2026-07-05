@@ -324,7 +324,7 @@ function MediaSection({ data }) {
 <span className="text-amber-400 font-serif text-sm tracking-[0.3em]">{data?.badge || 'MEDYADA BİZ'}</span>
             <div className="h-px w-12 bg-amber-500/40"/>
           </div>
-          <h2 className="font-serif text-4xl md:text-5xl text-amber-50">{data?.title || 'Haberlerde Ayıntap Balta Kılıç'}</h2>
+          <h2 className="font-serif text-4xl md:text-5xl text-amber-50">{data?.title || 'Haberlerde Ayıntap Kılıç'}</h2>
           <p className="mt-4 text-amber-100/60 max-w-xl mx-auto">{data?.subtitle || ''}</p>
         </div>
         <div className="grid md:grid-cols-2 gap-8">

@@ -103,7 +103,7 @@ export default function CartError({ error, reset }) {
         </div>
 
         <p className="text-amber-100/40 text-xs mt-6">
-          Ayıntap Balta Kılıç · Profesyonel Ustalık, Güvenli Alışveriş
+          Ayıntap Kılıç · Profesyonel Ustalık, Güvenli Alışveriş
         </p>
       </div>
     </main>

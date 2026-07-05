@@ -9,8 +9,8 @@ async function getSettings() {
 }
 
 export const metadata = {
-  title: 'Hikayemiz · Ayıntap Balta Kılıç',
-  description: 'Ayıntap Balta Kılıç\'ın üç kuşaklık demirci geleneği ve atölyemizin hikayesi.',
+  title: 'Hikayemiz · Ayıntap Kılıç',
+  description: 'Ayıntap Kılıç\'ın üç kuşaklık demirci geleneği ve atölyemizin hikayesi.',
 };
 
 export default async function Page() {

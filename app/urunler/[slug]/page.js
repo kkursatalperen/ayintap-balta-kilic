@@ -16,7 +16,7 @@ export async function generateMetadata({ params }) {
   const { product } = await fetchData(slug);
   if (!product) return { title: 'Ürün bulunamadı' };
   return {
-    title: `${product.name} · Ayıntap Balta Kılıç`,
+    title: `${product.name} · Ayıntap Kılıç`,
     description: product.description?.slice(0, 160),
     openGraph: {
       title: product.name,

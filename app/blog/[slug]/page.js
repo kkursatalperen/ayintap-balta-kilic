@@ -18,7 +18,7 @@ export async function generateMetadata({ params }) {
   const { post } = await fetchData(slug);
   if (!post) return { title: 'Yazı bulunamadı' };
   return {
-    title: post.seo?.title || `${post.title} · Ayıntap Balta Kılıç`,
+    title: post.seo?.title || `${post.title} · Ayıntap Kılıç`,
     description: post.seo?.description || post.excerpt,
     openGraph: {
       title: post.title,

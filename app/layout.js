@@ -6,11 +6,11 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const cinzel = Cinzel({ subsets: ['latin'], variable: '--font-cinzel' });
 
 export const metadata = {
-  title: 'Ayıntap Balta Kılıç | Geleneksel Türk El Yapımı Kılıç ve Balta',
+  title: 'Ayıntap Kılıç | Geleneksel Türk El Yapımı Kılıç ve Balta',
   description: 'Örsün üzerinde dövülen ataların mirası. Geleneksel yöntemlerle üretilen el yapımı kılıç, balta ve koleksiyon eserleri.',
   keywords: 'el yapımı kılıç, balta, türk kılıcı, osmanlı kılıcı, koleksiyon, gaziantep, ayintap',
   openGraph: {
-    title: 'Ayıntap Balta Kılıç',
+    title: 'Ayıntap Kılıç',
     description: 'Çeliğe Can Veren Gelenek',
     type: 'website',
     locale: 'tr_TR',

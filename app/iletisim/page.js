@@ -1,4 +1,4 @@
-﻿import Header from '@/components/Header';
+import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ContactForm from './ContactForm';
 import { Phone, Mail, MapPin, Clock } from 'lucide-react';
@@ -9,7 +9,7 @@ async function getSettings() {
   return r.settings || {};
 }
 
-export const metadata = { title: 'İletişim · Ayıntap Balta Kılıç' };
+export const metadata = { title: 'İletişim · Ayıntap Kılıç' };
 
 export default async function Page() {
   const s = await getSettings();

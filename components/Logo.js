@@ -5,7 +5,7 @@ export default function Logo({ className = '', showText = false }) {
     <div className={`flex items-center gap-3 ${className}`}>
       <Image
         src="/logo.png"
-        alt="Ayıntap Balta Kılıç Logo"
+        alt="Ayıntap Kılıç Logo"
         width={48}
         height={48}
         className="h-12 w-12 shrink-0 rounded-full"

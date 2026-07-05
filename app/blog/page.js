@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { ChevronRight, Calendar, Tag } from 'lucide-react';
 
 export const metadata = {
-  title: 'Blog · Ayıntap Balta Kılıç',
+  title: 'Blog · Ayıntap Kılıç',
   description: 'Demircilik geleneği, kılıç sanatı, Anadolu mirasi ve daha fazlası.',
 };
 

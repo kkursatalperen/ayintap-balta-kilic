@@ -70,7 +70,7 @@ export default function Footer({ settings }) {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-amber-100/40">
-            <p>© {new Date().getFullYear()} {s.brandName || 'Ayıntap Balta Kılıç'}. Tüm hakları saklıdır.</p>
+            <p>© {new Date().getFullYear()} {s.brandName || 'Ayıntap Kılıç'}. Tüm hakları saklıdır.</p>
             <p className="font-serif tracking-wider text-amber-500/60">Örsün Üzerinde Dövülen Miras</p>
           </div>
         </div>
