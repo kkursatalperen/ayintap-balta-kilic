@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Star, Truck, Shield, Hammer, Flame, Check, Heart } from 'lucide-react';
+import { Star, Truck, Shield, Hammer, Flame, Check, Heart, AlertTriangle } from 'lucide-react';
 import { useCart } from '@/lib/store';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -13,6 +13,8 @@ export default function ProductDetail({ product }) {
   const [woodenBox, setWoodenBox] = useState(false);
   const [isFav, setIsFav] = useState(false);
   const [authed, setAuthed] = useState(false);
+  // YENİ: 18+ yaş onay state'i
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const add = useCart((s) => s.add);
   const router = useRouter();
   const images = product.images?.length ? product.images : [product.image];
@@ -38,6 +40,8 @@ export default function ProductDetail({ product }) {
   };
 
   const handleAdd = () => {
+    // YENİ: 18+ onayı kontrolü
+    if (!ageConfirmed) { toast.error('Devam etmek için 18 yaşından büyük olduğunuzu onaylayınız'); return; }
     if (personalize && !name.trim()) { toast.error('Lütfen yazdırılacak ismi giriniz'); return; }
     add(product, { qty, personalization: personalize ? name.trim() : null, woodenBox: woodenBox ? true : false });
     toast.success('Sepete eklendi');
@@ -79,6 +83,15 @@ export default function ProductDetail({ product }) {
             </div>
             <p className="mt-6 text-amber-100/70 leading-relaxed text-lg">{product.description}</p>
 
+            {/* YENİ: Ürün kullanım amacı ibaresi */}
+            <div className="mt-4 flex items-start gap-2 text-xs text-amber-100/60 border border-amber-500/15 rounded-lg p-3 bg-amber-500/5">
+              <Check className="text-amber-500 shrink-0 mt-0.5" size={13}/>
+              <span>
+                Bu ürün <span className="text-amber-300">dekoratif, koleksiyonluk, avcılık ile kampçılık ve doğa aktiviteleri</span> amacıyla
+                tasarlanmış olup el işçiliğiyle üretilmektedir.
+              </span>
+            </div>
+
             {product.woodenBoxPrice > 0 && (
               <div className="mt-6 p-5 border border-amber-500/30 rounded bg-amber-500/5">
                 <label className="flex items-center gap-3 cursor-pointer">
@@ -107,6 +120,25 @@ export default function ProductDetail({ product }) {
                 )}
               </div>
             )}
+
+            {/* YENİ: 18+ yaş doğrulama checkbox'ı */}
+            <div className={`mt-6 p-4 border rounded-lg transition-colors ${ageConfirmed ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-red-500/30 bg-red-500/5'}`}>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={ageConfirmed}
+                  onChange={(e) => setAgeConfirmed(e.target.checked)}
+                  className="w-5 h-5 mt-0.5 accent-amber-500 shrink-0"
+                />
+                <div className="flex items-start gap-2">
+                  <AlertTriangle size={15} className={`shrink-0 mt-0.5 ${ageConfirmed ? 'text-emerald-400' : 'text-red-400'}`}/>
+                  <span className="text-sm text-amber-100/80 leading-relaxed">
+                    <span className="font-semibold text-amber-100">18 yaşından büyük olduğumu onaylıyorum.</span>
+                    {' '}Bu ürünlerin 18 yaşından küçüklere satışı yapılmamaktadır. Satın alarak yasal yaşta olduğunuzu kabul etmiş sayılırsınız.
+                  </span>
+                </div>
+              </label>
+            </div>
 
             <div className="mt-8 flex items-center gap-4">
               <div className="flex items-center border border-amber-500/30 rounded">

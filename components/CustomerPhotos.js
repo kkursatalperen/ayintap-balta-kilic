@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export default function CustomerPhotos({ data }) {
   // data içindeki instagramUrl yoksa varsayılan olarak '#' koyar
-  const instaLink = data.instagramUrl || 'https://instagram.com/ayintap';
+  const instaLink = data.instagramUrl || 'https://instagram.com/ayintapbaltakilic';
 
   return (
     <section className="py-20 bg-[#0a0a0a] text-amber-50">

@@ -187,7 +187,7 @@ function OrderCard({ order }) {
           )}
           {/* Items */}
           <div>
-            <h4 className="font-serif text-amber-400 text-sm tracking-widest mb-3">ÃœRÃœNLER</h4>
+            <h4 className="font-serif text-amber-400 text-sm tracking-widest mb-3">ÜRÜNLER</h4>
             <div className="space-y-2">
               {(order.items || []).map((i, idx) => (
                 <div key={idx} className="flex items-center gap-3 p-3 bg-black/30 rounded">
