@@ -46,7 +46,7 @@ export default async function Page() {
               <h2 className="font-serif text-3xl text-amber-400 mb-6">{s.about?.title || "Gaziantep'ten Dünyaya"}</h2>
               <div className="space-y-4 text-amber-100/80 leading-relaxed font-serif text-lg">
                 <p>{s.about?.paragraph1 || "Gaziantep'in eski adıyla Ayıntap topraklarında, dededen toruna aktarılan bir gelenek... Örsümüzün üzerinde dövülen her çelik, atalarımızın kor ateşinden bir miras taşır."}</p>
-                <p>{s.about?.paragraph2 || "Biz yalnızca silah değil; tarih dövüyoruz. Her kılıcın içinde bir destan, her baltanın sapında nesillerin teri ve emeği saklıdır."}</p>
+                <p>{s.about?.paragraph2 || "Biz yalnızca metal işlemiyoruz; tarih dövüyoruz. Her kılıcın içinde bir destan, her baltanın sapında nesillerin teri ve emeği saklıdır."}</p>
                 <p>{s.footerAbout || 'Geleneksel Türk demircilik sanatını yaşatmak ve dünyaya tanıtmak için çalışıyoruz. Her eserimiz el yapımı, her biri benzersiz.'}</p>
               </div>
             </div>

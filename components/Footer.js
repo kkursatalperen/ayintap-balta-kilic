@@ -71,6 +71,13 @@ export default function Footer({ settings }) {
                 <p className="text-amber-100/40 text-[10px]">Visa / Mastercard</p>
               </div>
             </div>
+            <div className="flex items-center gap-2 bg-amber-500/5 border border-amber-500/15 rounded-lg px-4 py-3">
+              <span className="text-amber-400 font-serif text-lg leading-none">18+</span>
+              <div>
+                <p className="text-amber-50 text-xs font-serif">Yaş Sınırı</p>
+                <p className="text-amber-100/40 text-[10px]">18 Yaş ve Üzeri Satış</p>
+              </div>
+            </div>
           </div>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-amber-100/40">
             <p>© {new Date().getFullYear()} {s.brandName || 'Ayıntap Kılıç'}. Tüm hakları saklıdır.</p>
