@@ -151,7 +151,7 @@ function OrderCard({ order }) {
         </div>
         <div className="flex items-center gap-4">
           <span className={`text-xs px-3 py-1 rounded ${status.color}`}>{status.label}</span>
-          <span className="font-serif text-xl text-amber-400">{(order.total || 0).toLocaleString('tr-TR')}â‚º</span>
+          <span className="font-serif text-xl text-amber-400">{(order.total || 0).toLocaleString('tr-TR')}₺</span>
         </div>
       </button>
       {open && (
@@ -195,7 +195,7 @@ function OrderCard({ order }) {
                   <div className="flex-1">
                     <p className="text-amber-100 text-sm">{i.name}</p>
                     {i.personalization && <p className="text-xs text-amber-400">Lazer: "{i.personalization}"</p>}
-                    <p className="text-xs text-amber-100/50">{i.qty} adet x {(i.price + (i.personalizationPrice || 0)).toLocaleString('tr-TR')}â‚º</p>
+                    <p className="text-xs text-amber-100/50">{i.qty} adet x {(i.price + (i.personalizationPrice || 0)).toLocaleString('tr-TR')}₺</p>
                   </div>
                 </div>
               ))}
@@ -233,7 +233,7 @@ function FavoritesTab() {
           <button onClick={() => remove(p.id)} className="absolute top-3 right-3 bg-red-600/80 text-white rounded-full p-2 hover:bg-red-500"><Heart size={16} fill="white"/></button>
           <div className="p-4">
             <h3 className="font-serif text-amber-50 truncate">{p.name}</h3>
-            <p className="text-amber-400 font-serif text-lg mt-1">{p.price.toLocaleString('tr-TR')}â‚º</p>
+            <p className="text-amber-400 font-serif text-lg mt-1">{p.price.toLocaleString('tr-TR')}₺</p>
           </div>
         </div>
       ))}
