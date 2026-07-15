@@ -37,33 +37,27 @@ export default function BrandLoader({ fullScreen = true, label = 'Yükleniyor' }
             />
           ))}
 
-          {/* Dış dönen halka (kesikli, örs çevresi hissi) */}
+          {/* Dönen halka — tek, net, kesiksiz gradient ark */}
           <svg className="brand-loader-ring absolute inset-0 w-full h-full" viewBox="0 0 100 100" fill="none">
             <circle
-              cx="50" cy="50" r="46"
+              cx="50" cy="50" r="44"
+              stroke="#3a3a3a"
+              strokeWidth="2"
+              opacity="0.4"
+            />
+            <circle
+              cx="50" cy="50" r="44"
               stroke="url(#loaderGrad1)"
-              strokeWidth="1.5"
-              strokeDasharray="8 10"
+              strokeWidth="2.5"
               strokeLinecap="round"
+              strokeDasharray="90 190"
             />
             <defs>
               <linearGradient id="loaderGrad1" x1="0" y1="0" x2="100" y2="100">
-                <stop offset="0%" stopColor="#d4af37" stopOpacity="0.9"/>
-                <stop offset="100%" stopColor="#d4af37" stopOpacity="0.1"/>
+                <stop offset="0%" stopColor="#fbbf24"/>
+                <stop offset="100%" stopColor="#d4af37" stopOpacity="0.2"/>
               </linearGradient>
             </defs>
-          </svg>
-
-          {/* İç ters yönde dönen ince halka */}
-          <svg className="brand-loader-ring-inner absolute inset-4 w-[calc(100%-2rem)] h-[calc(100%-2rem)]" viewBox="0 0 100 100" fill="none">
-            <circle
-              cx="50" cy="50" r="46"
-              stroke="#fbbf24"
-              strokeWidth="1"
-              strokeDasharray="2 14"
-              strokeLinecap="round"
-              opacity="0.6"
-            />
           </svg>
 
           {/* Logo — sabit, ortada */}
