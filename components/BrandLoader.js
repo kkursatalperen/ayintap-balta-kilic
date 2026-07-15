@@ -17,7 +17,7 @@ export default function BrandLoader({ fullScreen = true, label = 'Yükleniyor' }
   return (
     <div className={fullScreen ? 'min-h-screen bg-[#0d0d0d] flex items-center justify-center' : 'flex items-center justify-center py-16'}>
       <div className="flex flex-col items-center gap-6">
-        <div className="relative w-32 h-32 flex items-center justify-center">
+        <div className="relative w-36 h-36 flex items-center justify-center">
           {/* Arka kor parıltısı */}
           <div className="brand-loader-glow absolute inset-2 rounded-full bg-amber-500/20 blur-xl"/>
 
@@ -68,7 +68,7 @@ export default function BrandLoader({ fullScreen = true, label = 'Yükleniyor' }
 
           {/* Logo — sabit, ortada */}
           <div className="relative z-10 rounded-full ring-1 ring-amber-500/30 shadow-[0_0_25px_rgba(212,175,55,0.35)] overflow-hidden bg-[#0d0d0d]">
-            <Image src="/logo.png" alt="Ayıntap Kılıç" width={56} height={56} className="w-14 h-14" priority/>
+            <Image src="/logo.png" alt="Ayıntap Kılıç" width={80} height={80} className="w-20 h-20" priority/>
           </div>
         </div>
 
