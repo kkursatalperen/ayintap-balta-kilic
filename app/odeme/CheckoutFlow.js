@@ -24,7 +24,7 @@ const SHIPPING_METHODS = [
 
 const PAYMENT_METHODS = [
   { id: 'iyzico', label: 'Kredi / Banka Kartı (iyzico)', desc: '3D Secure ile güvenli ödeme', icon: CreditCard, recommended: true, mock: true },
-  { id: 'paytr', label: 'Kredi Kartı (PayTR)', desc: 'Alternatif ödeme sağlayıcı', icon: Smartphone, mock: true },
+  { id: 'paytr', label: 'Kredi Kartı (PayTR)', desc: 'Alternatif ödeme sağlayıcı', icon: Smartphone },
   { id: 'transfer', label: 'Havale / EFT', desc: 'Banka hesabımıza havale (3 iş günü onay)', icon: Building2 },
   { id: 'cod', label: 'Kapıda Ödeme', desc: 'Teşlimat sırasında nakit/kart', icon: Wallet, extraFee: 25 },
 ];
@@ -44,6 +44,7 @@ export default function CheckoutFlow() {
   const [agreeContract, setAgreeContract] = useState(false);
   const [agreeKvkk, setAgreeKvkk] = useState(false);
   const [placing, setPlacing] = useState(false);
+  const [paytrFrameUrl, setPaytrFrameUrl] = useState(null);
 
   const subtotal = total();
   const shippingObj = SHIPPING_METHODS.find(s => s.id === shippingMethod);
@@ -147,8 +148,26 @@ export default function CheckoutFlow() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Sipariş oluşturulamadı');
+
       // Payment routing
-      if (paymentMethod === 'iyzico' || paymentMethod === 'paytr') {
+      if (paymentMethod === 'paytr') {
+        const initRes = await fetch('/api/payment/paytr-init', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderNumber: data.order.orderNumber }),
+        });
+        const initData = await initRes.json();
+        if (!initRes.ok) {
+          // PayTR henüz onaylanmadıysa / yapılandırılmadıysa kullanıcıyı bilgilendir, siparişi kaybetme
+          toast.error(initData.error || 'PayTR ödeme şu anda kullanılamıyor, lütfen başka bir yöntem seçin');
+          setPlacing(false);
+          return;
+        }
+        clear();
+        setPaytrFrameUrl(initData.iframeUrl);
+        setPlacing(false);
+        return;
+      } else if (paymentMethod === 'iyzico') {
         toast.success('Sipariş oluşturuldu! Ödeme sayfasına yönlendiriliyorsunuz... (test modu)');
       } else {
         toast.success('Siparişiniz alındı! Sipariş no: ' + data.order.orderNumber);
@@ -157,6 +176,27 @@ export default function CheckoutFlow() {
       setTimeout(() => router.push('/odeme/basarili?no=' + data.order.orderNumber), 800);
     } catch (e) { toast.error(e.message); setPlacing(false); }
   };
+
+  if (paytrFrameUrl) {
+    return (
+      <main className="pt-24 pb-10 min-h-screen">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center gap-2 mb-4 text-amber-100/70 text-sm">
+            <Lock size={14} className="text-amber-400"/> Güvenli ödeme — kart bilgileriniz PayTR üzerinden şifrelenerek işlenir, bizim sunucularımızdan geçmez.
+          </div>
+          <div className="bg-[#161616] border border-amber-500/20 rounded-lg overflow-hidden" style={{ minHeight: 620 }}>
+            <iframe
+              src={paytrFrameUrl}
+              id="paytriframe"
+              frameBorder="0"
+              style={{ width: '100%', minHeight: 620 }}
+              title="PayTR Güvenli Ödeme"
+            />
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="pt-28 pb-20 min-h-screen">

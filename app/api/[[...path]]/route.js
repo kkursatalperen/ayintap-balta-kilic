@@ -11,6 +11,7 @@ import {
   sendVerifyEmail,
   sendWelcomeEmail,
 } from '@/lib/email';
+import { getPaytrToken, verifyPaytrCallback, isPaytrConfigured } from '@/lib/paytr';
 
 const json = (data, status = 200) => NextResponse.json(data, { status });
 const err = (msg, status = 400) => NextResponse.json({ error: msg }, { status });
@@ -325,6 +326,87 @@ async function route(request, { params }) {
     const o = await col.findOne({ $or: [{ id: key }, { orderNumber: key }] }, { projection: { _id: 0 } });
     if (!o) return err('Siparis bulunamadi', 404);
     return json({ order: o });
+  }
+
+  // ============ PAYMENT (PAYTR) ============
+  if (path === '/payment/paytr-init' && method === 'POST') {
+    const body = await readBody(request);
+    const { orderNumber } = body;
+    if (!orderNumber) return err('orderNumber zorunlu', 400);
+    if (!isPaytrConfigured()) return err('PayTR henuz yapilandirilmadi (merchant onayi bekleniyor)', 503);
+
+    const ordersCol = await getCollection('orders');
+    const order = await ordersCol.findOne({ orderNumber }, { projection: { _id: 0 } });
+    if (!order) return err('Siparis bulunamadi', 404);
+    if (order.paymentStatus === 'paid') return err('Bu siparis zaten odenmis', 400);
+
+    const userIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      || request.headers.get('x-real-ip')
+      || '127.0.0.1';
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || new URL(request.url).origin;
+    const basketItems = (order.items || []).map(i => [
+      i.name.slice(0, 100),
+      ((i.price + (i.personalizationPrice || 0))).toFixed(2),
+      i.qty,
+    ]);
+
+    try {
+      const { token } = await getPaytrToken({
+        order,
+        basketItems,
+        userIp,
+        okUrl: `${baseUrl}/odeme/basarili?no=${order.orderNumber}`,
+        failUrl: `${baseUrl}/odeme?hata=1&no=${order.orderNumber}`,
+      });
+      return json({ token, iframeUrl: `https://www.paytr.com/odeme/guvenli/${token}` });
+    } catch (e) {
+      console.error('[PAYTR] init failed:', e?.message || e);
+      return err(e?.message || 'PayTR odeme baslatilamadi', 500);
+    }
+  }
+
+  // PayTR callback -- PUBLIC endpoint, PayTR sunuculari cagirir. Auth YOK.
+  // Content-Type: application/x-www-form-urlencoded
+  // Basarili isleme her zaman duz metin "OK" donmek ZORUNLU, aksi halde PayTR tekrar dener.
+  if (path === '/payment/paytr-callback' && method === 'POST') {
+    try {
+      const formData = await request.formData();
+      const fields = Object.fromEntries(formData.entries());
+      const { merchant_oid, status, total_amount } = fields;
+
+      if (!verifyPaytrCallback(fields)) {
+        console.error('[PAYTR] callback hash mismatch', merchant_oid);
+        return new NextResponse('PAYTR notification failed: bad hash', { status: 400 });
+      }
+
+      const ordersCol = await getCollection('orders');
+      const order = await ordersCol.findOne({ orderNumber: merchant_oid });
+      if (order && order.paymentStatus !== 'paid') {
+        if (status === 'success') {
+          const history = order.statusHistory || [];
+          history.push({ status: 'paid', at: new Date(), note: 'PayTR odeme onaylandi' });
+          await ordersCol.updateOne({ orderNumber: merchant_oid }, {
+            $set: { paymentStatus: 'paid', status: 'paid', statusHistory: history, updatedAt: new Date() }
+          });
+          try {
+            const toEmail = order.customer?.email;
+            if (toEmail) await sendOrderStatusUpdateEmail({ to: toEmail, orderNumber: merchant_oid, status: 'paid', note: 'Odemeniz alindi' });
+          } catch (e) { console.error('[EMAIL] paid notify failed:', e?.message || e); }
+        } else {
+          const history = order.statusHistory || [];
+          history.push({ status: 'payment_failed', at: new Date(), note: 'PayTR odeme basarisiz' });
+          await ordersCol.updateOne({ orderNumber: merchant_oid }, {
+            $set: { paymentStatus: 'failed', statusHistory: history, updatedAt: new Date() }
+          });
+        }
+      }
+      // PayTR bu tam cevabi bekliyor, degistirilmemeli
+      return new NextResponse('OK', { status: 200 });
+    } catch (e) {
+      console.error('[PAYTR] callback error:', e?.message || e);
+      return new NextResponse('PAYTR notification failed', { status: 500 });
+    }
   }
 
   // ============ ME (USER ENDPOINTS) ============
