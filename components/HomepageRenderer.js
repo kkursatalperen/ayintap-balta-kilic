@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ChevronRight, ChevronLeft, Star, Flame, Hammer, Shield, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/lib/store';
@@ -46,7 +47,15 @@ function HeroSlider({ data }) {
     <section className="relative h-screen w-full overflow-hidden">
       <AnimatePresence mode="wait">
         <motion.div key={idx} initial={{ opacity: 0, scale: 1.1 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }} className="absolute inset-0">
-          <img src={slide.image} alt={slide.title} className="w-full h-full object-cover"/>
+          <Image
+            src={slide.image}
+            alt={slide.title || 'Ayıntap Kılıç'}
+            fill
+            priority={idx === 0}
+            sizes="100vw"
+            quality={90}
+            className="object-cover"
+          />
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-[#0d0d0d]"/>
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent"/>
         </motion.div>
@@ -175,7 +184,14 @@ function Collections({ data }) {
           {(data?.items || []).map((it, i) => (
             <Reveal key={i} delay={Math.min(i * 0.1, 0.3)}>
               <Link href={it.link} className="group relative h-96 overflow-hidden rounded-lg block">
-                <img src={it.image} alt={it.name} className="w-full h-full object-cover group-hover:scale-110 transition duration-700"/>
+                <Image
+                  src={it.image}
+                  alt={it.name}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  quality={88}
+                  className="object-cover group-hover:scale-110 transition duration-700"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"/>
                 <div className="absolute inset-0 flex flex-col justify-end p-8">
                   <h3 className="font-serif text-3xl text-amber-50 mb-2">{it.name}</h3>
