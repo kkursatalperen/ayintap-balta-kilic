@@ -62,7 +62,7 @@ export default function BrandLoader({ fullScreen = true, label = 'Yükleniyor' }
 
           {/* Logo — sabit, ortada */}
           <div className="relative z-10 rounded-full ring-1 ring-amber-500/30 shadow-[0_0_25px_rgba(212,175,55,0.35)] overflow-hidden bg-[#0d0d0d]">
-            <Image src="/logo.png" alt="Ayıntap Kılıç" width={80} height={80} className="w-20 h-20" priority/>
+            <Image src="/logo-clean.png" alt="Ayıntap Kılıç" width={80} height={80} className="w-20 h-20" priority/>
           </div>
         </div>
 

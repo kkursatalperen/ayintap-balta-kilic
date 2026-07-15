@@ -3,7 +3,7 @@ export default function Logo({ className = '', showText = false }) {
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <Image
-        src="/logo.png"
+        src="/logo-clean.png"
         alt="Ayintap Kilic Logo"
         width={48}
         height={48}
