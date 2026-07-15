@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Star, Truck, Shield, Hammer, Flame, Check, Heart, AlertTriangle, X, ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, Truck, Shield, Hammer, Flame, Check, Heart, AlertTriangle, X, ZoomIn, ChevronLeft, ChevronRight, ChevronDown, Facebook, Send } from 'lucide-react';
 import { useCart } from '@/lib/store';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { ProductCard } from '@/components/HomepageRenderer';
 
 export default function ProductDetail({ product }) {
   const [activeImg, setActiveImg] = useState(0);
@@ -15,10 +16,25 @@ export default function ProductDetail({ product }) {
   const [authed, setAuthed] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [deliveryOpen, setDeliveryOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
   const add = useCart((s) => s.add);
   const router = useRouter();
   const images = product.images?.length ? product.images : [product.image];
   const finalPrice = product.price + (personalize ? (product.personalizationPrice || 250) : 0) + (woodenBox ? (product.woodenBoxPrice || 0) : 0);
+
+  useEffect(() => {
+    setShareUrl(window.location.href);
+  }, []);
+
+  useEffect(() => {
+    if (!product.categoryId) return;
+    fetch('/api/products').then(r => r.json()).then(d => {
+      const items = (d.products || []).filter(p => p.categoryId === product.categoryId && p.id !== product.id).slice(0, 4);
+      setRelatedProducts(items);
+    }).catch(() => {});
+  }, [product.id, product.categoryId]);
 
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.json()).then(d => {
@@ -221,8 +237,50 @@ export default function ProductDetail({ product }) {
                 <Heart size={20} fill={isFav ? 'currentColor' : 'none'}/>
               </button>
             </div>
+
+            {/* Sosyal paylaşım */}
+            <div className="mt-5 flex items-center gap-3">
+              <span className="text-amber-100/40 text-xs tracking-widest uppercase">Paylaş</span>
+              <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full border border-amber-500/20 text-amber-100/60 hover:text-amber-400 hover:border-amber-500/50 transition" title="Facebook'ta paylaş">
+                <Facebook size={15}/>
+              </a>
+              <a href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(product.name)}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full border border-amber-500/20 text-amber-100/60 hover:text-amber-400 hover:border-amber-500/50 transition" title="Telegram'da paylaş">
+                <Send size={15}/>
+              </a>
+              <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(product.name + ' ' + shareUrl)}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full border border-amber-500/20 text-amber-100/60 hover:text-amber-400 hover:border-amber-500/50 transition" title="WhatsApp'ta paylaş">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.79 14.12c-.24.68-1.4 1.3-1.93 1.38-.49.08-1.11.11-1.79-.11-.41-.13-.95-.31-1.63-.6-2.87-1.24-4.74-4.15-4.88-4.34-.14-.19-1.17-1.55-1.17-2.96s.73-2.1.99-2.39c.26-.28.56-.35.75-.35s.38 0 .54.01c.18.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.09.19-.14.31-.28.47-.14.16-.29.36-.42.48-.14.13-.28.28-.12.55.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.68-.79.86-1.06.19-.28.37-.23.62-.14.26.09 1.63.77 1.91.91.28.14.47.21.53.33.07.12.07.68-.17 1.35z"/></svg>
+              </a>
+            </div>
+
+            {/* Teslimat Detayları accordion */}
+            <div className="mt-4 border border-amber-500/15 rounded-lg overflow-hidden">
+              <button onClick={() => setDeliveryOpen(!deliveryOpen)} className="w-full flex items-center justify-between px-4 py-3 text-sm text-amber-100 font-serif tracking-wide hover:bg-amber-500/5 transition">
+                Teslimat Detayları
+                <ChevronDown size={16} className={`text-amber-500 transition-transform ${deliveryOpen ? 'rotate-180' : ''}`}/>
+              </button>
+              {deliveryOpen && (
+                <div className="px-4 pb-4 text-sm text-amber-100/60 leading-relaxed border-t border-amber-500/10 pt-3">
+                  Tüm Türkiye'ye ürünlerimiz {product.stock > 0 ? '2-4 iş günü' : 'stok geldiğinde'} içerisinde kargoya verilmektedir.
+                  Atölyemizin yoğunluğuna bağlı olarak süre değişiklik gösterebilir; siparişiniz kargoya verildiğinde takip numaranız
+                  tarafınıza e-posta ile iletilecektir.
+                </div>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Tamamlayıcı / İlginizi Çekebilecek Ürünler */}
+        {relatedProducts.length > 0 && (
+          <div className="mt-20">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="h-px w-10 bg-amber-500/40"/>
+              <h2 className="font-serif text-2xl text-amber-50">İlginizi Çekebilecek Ürünler</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {relatedProducts.map((p) => <ProductCard key={p.id} product={p}/>)}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Lightbox / Tam ekran görüntüleme */}
