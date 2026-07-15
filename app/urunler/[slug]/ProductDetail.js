@@ -179,6 +179,12 @@ export default function ProductDetail({ product }) {
               <span>Bu ürün <span className="text-amber-400">el yapımı</span> ve <span className="text-amber-400">sertifikalı Türk çeliğinden</span> üretilmektedir. Her parça ustanın imzasını taşır.</span>
             </div>
 
+            {/* Dekoratif/güvenlik beyanı */}
+            <div className="mt-3 flex items-center gap-2 text-xs text-amber-100/50 border border-amber-500/10 rounded-lg p-3 bg-black/20">
+              <AlertTriangle className="text-amber-500 shrink-0" size={14}/>
+              <span>Ürünlerimiz <span className="text-amber-400">koleksiyon ve dekoratif amaçlıdır</span>, ağız kısımları <span className="text-amber-400">küt/kesmeyen</span> şekilde üretilir; kesici alet olarak kullanım için tasarlanmamıştır.</span>
+            </div>
+
             <div className="mt-10">
               <h3 className="font-serif text-2xl text-amber-50 mb-4 flex items-center gap-2"><Flame className="text-amber-500" size={20}/> Teknik Özellikler</h3>
               <div className="divide-y divide-amber-500/10 border border-amber-500/20 rounded">

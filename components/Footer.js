@@ -26,6 +26,9 @@ export default function Footer({ settings }) {
               <li><Link href="/mesafeli-satis" className="hover:text-amber-400">Mesafeli Satış Sözleşmesi</Link></li>
               <li><Link href="/iade-politikasi" className="hover:text-amber-400">İade Politikası</Link></li>
               <li><Link href="/kvkk" className="hover:text-amber-400">KVKK</Link></li>
+              <li><Link href="/gizlilik-politikasi" className="hover:text-amber-400">Gizlilik Politikası</Link></li>
+              <li><Link href="/cerez-politikasi" className="hover:text-amber-400">Çerez Politikası</Link></li>
+              <li><Link href="/kullanici-sozlesmesi" className="hover:text-amber-400">Kullanıcı Sözleşmesi</Link></li>
             </ul>
           </div>
           <div>
