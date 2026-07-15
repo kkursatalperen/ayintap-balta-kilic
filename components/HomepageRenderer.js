@@ -5,6 +5,7 @@ import { ChevronRight, ChevronLeft, Star, Flame, Hammer, Shield, Heart } from 'l
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/lib/store';
 import { toast } from 'sonner';
+import Reveal from './Reveal';
 
 export default function HomepageRenderer({ sections }) {
   return (
@@ -59,10 +60,10 @@ function HeroSlider({ data }) {
           <h1 className="font-serif text-5xl md:text-7xl text-amber-50 leading-tight tracking-tight">{slide.title}</h1>
           <p className="mt-6 text-lg md:text-xl text-amber-100/80 font-light max-w-xl">{slide.subtitle}</p>
           <div className="mt-10 flex gap-4 flex-wrap">
-            <Link href={slide.link || '/urunler'} className="group bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-8 py-4 rounded font-serif tracking-widest hover:from-amber-400 hover:to-amber-500 transition flex items-center gap-2">
+            <Link href={slide.link || '/urunler'} className="btn-amber group bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold px-8 py-4 rounded font-serif tracking-widest hover:from-amber-400 hover:to-amber-500 transition flex items-center gap-2">
               {slide.cta || 'Keşfet'} <ChevronRight size={18} className="group-hover:translate-x-1 transition"/>
             </Link>
-            <Link href="#hikayemiz" className="border-2 border-amber-500/50 text-amber-100 px-8 py-4 rounded font-serif tracking-widest hover:bg-amber-500/10 transition">HİKAYEMİZ</Link>
+            <Link href="#hikayemiz" className="border-2 border-amber-500/50 text-amber-100 px-8 py-4 rounded font-serif tracking-widest hover:bg-amber-500/10 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200">HİKAYEMİZ</Link>
           </div>
         </motion.div>
       </div>
@@ -97,10 +98,14 @@ export function ProductCard({ product }) {
   };
 
   return (
-    <motion.div whileHover={{ y: -6 }} className="group relative bg-[#161616] border border-amber-500/10 rounded-lg overflow-hidden">
+    <motion.div whileHover={{ y: -6 }} className="group relative bg-[#161616] border border-amber-500/10 rounded-lg overflow-hidden transition-shadow duration-500 hover:border-amber-500/40 hover:shadow-[0_20px_50px_-15px_rgba(212,175,55,0.25)]">
       <Link href={`/urunler/${product.slug}`} className="block">
-        <div className="aspect-[3/4] overflow-hidden bg-black">
+        <div className="aspect-[3/4] overflow-hidden bg-black relative">
           <img src={product.images?.[0] || product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition duration-700"/>
+          {product.images?.[1] && (
+            <img src={product.images[1]} alt={product.name} className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition duration-500 scale-105 group-hover:scale-110"/>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-500"/>
         </div>
         <div className="absolute top-3 left-3 flex flex-col gap-2">
           {product.isNew && <span className="bg-amber-500 text-black text-[10px] font-bold tracking-widest px-2 py-1">YENİ</span>}
@@ -133,7 +138,7 @@ function FeaturedProducts({ data }) {
   const products = data?.products || [];
   return (
     <section className="py-24 px-6 max-w-7xl mx-auto">
-      <div className="text-center mb-14">
+      <Reveal className="text-center mb-14">
         <div className="flex items-center justify-center gap-3 mb-4">
           <div className="h-px w-12 bg-amber-500/40"/>
           <Flame className="text-amber-500" size={20}/>
@@ -141,15 +146,19 @@ function FeaturedProducts({ data }) {
         </div>
         <h2 className="font-serif text-4xl md:text-5xl text-amber-50">{data?.title || 'Öne Çıkan Eserler'}</h2>
         <p className="mt-4 text-amber-100/60 max-w-2xl mx-auto">{data?.subtitle || ''}</p>
-      </div>
+      </Reveal>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {products.map((p) => <ProductCard key={p.id} product={p}/>)}
+        {products.map((p, i) => (
+          <Reveal key={p.id} delay={Math.min(i * 0.07, 0.35)}>
+            <ProductCard product={p}/>
+          </Reveal>
+        ))}
       </div>
-      <div className="text-center mt-12">
+      <Reveal className="text-center mt-12">
         <Link href="/urunler" className="inline-flex items-center gap-2 border border-amber-500/40 px-8 py-3 text-amber-100 font-serif tracking-widest hover:bg-amber-500/10 transition">
           TÜM ÜRÜNLERİ GÖR <ChevronRight size={18}/>
         </Link>
-      </div>
+      </Reveal>
     </section>
   );
 }
@@ -158,20 +167,22 @@ function Collections({ data }) {
   return (
     <section className="py-24 px-6 bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-14">
+        <Reveal className="text-center mb-14">
           <h2 className="font-serif text-4xl md:text-5xl text-amber-50">{data?.title}</h2>
           <p className="mt-4 text-amber-100/60">{data?.subtitle}</p>
-        </div>
+        </Reveal>
         <div className="grid md:grid-cols-3 gap-6">
           {(data?.items || []).map((it, i) => (
-            <Link href={it.link} key={i} className="group relative h-96 overflow-hidden rounded-lg block">
-              <img src={it.image} alt={it.name} className="w-full h-full object-cover group-hover:scale-110 transition duration-700"/>
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"/>
-              <div className="absolute inset-0 flex flex-col justify-end p-8">
-                <h3 className="font-serif text-3xl text-amber-50 mb-2">{it.name}</h3>
-                <span className="text-amber-400 font-serif tracking-widest text-sm inline-flex items-center gap-2">KEŞFET <ChevronRight size={14}/></span>
-              </div>
-            </Link>
+            <Reveal key={i} delay={Math.min(i * 0.1, 0.3)}>
+              <Link href={it.link} className="group relative h-96 overflow-hidden rounded-lg block">
+                <img src={it.image} alt={it.name} className="w-full h-full object-cover group-hover:scale-110 transition duration-700"/>
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"/>
+                <div className="absolute inset-0 flex flex-col justify-end p-8">
+                  <h3 className="font-serif text-3xl text-amber-50 mb-2">{it.name}</h3>
+                  <span className="text-amber-400 font-serif tracking-widest text-sm inline-flex items-center gap-2">KEŞFET <ChevronRight size={14}/></span>
+                </div>
+              </Link>
+            </Reveal>
           ))}
         </div>
       </div>

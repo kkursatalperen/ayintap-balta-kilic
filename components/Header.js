@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
 import { Menu, ShoppingCart, User, X, ChevronDown, LayoutDashboard, Package, Heart, MapPin, LogOut, Settings } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Logo from './Logo';
 import { useCart, useAuth } from '@/lib/store';
 import CartDrawer from './CartDrawer';
@@ -155,11 +156,27 @@ export default function Header({ settings }) {
         </div>
       </header>
 
-      {mobileOpen && (
-        <div className="fixed inset-0 z-[60] bg-[#0d0d0d] lg:hidden flex flex-col">
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              onClick={() => setMobileOpen(false)}
+              className="fixed inset-0 z-[59] bg-black/50 lg:hidden"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ duration: 0.32, ease: [0.21, 0.47, 0.32, 0.98] }}
+              className="fixed inset-y-0 right-0 z-[60] w-[85%] max-w-sm bg-[#0d0d0d] lg:hidden flex flex-col border-l border-amber-500/10 shadow-2xl"
+            >
           <div className="flex items-center justify-between px-5 py-4 border-b border-amber-500/20 shrink-0">
             <Logo showText={true}/>
-            <button onClick={() => setMobileOpen(false)} className="p-3 text-amber-100"><X size={26}/></button>
+            <button onClick={() => setMobileOpen(false)} className="p-3 text-amber-100 hover:text-amber-400 transition"><X size={26}/></button>
           </div>
           <div className="flex flex-col px-6 py-4 gap-1 overflow-y-auto flex-1">
             <Link href="/" onClick={() => setMobileOpen(false)} className="text-amber-100 font-serif text-xl tracking-wider border-b border-amber-500/10 py-4">Anasayfa</Link>
@@ -184,8 +201,10 @@ export default function Header({ settings }) {
               </div>
             )}
           </div>
-        </div>
-      )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
       <CartDrawer settings={settings}/>
     </>
   );

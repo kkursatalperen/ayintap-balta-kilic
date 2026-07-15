@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Star, Truck, Shield, Hammer, Flame, Check, Heart, AlertTriangle } from 'lucide-react';
+import { Star, Truck, Shield, Hammer, Flame, Check, Heart, AlertTriangle, X, ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCart } from '@/lib/store';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -14,6 +14,7 @@ export default function ProductDetail({ product }) {
   const [isFav, setIsFav] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const add = useCart((s) => s.add);
   const router = useRouter();
   const images = product.images?.length ? product.images : [product.image];
@@ -29,6 +30,18 @@ export default function ProductDetail({ product }) {
       }
     });
   }, [product.id]);
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setLightboxOpen(false);
+      if (e.key === 'ArrowRight') setActiveImg((i) => (i + 1) % images.length);
+      if (e.key === 'ArrowLeft') setActiveImg((i) => (i - 1 + images.length) % images.length);
+    };
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, [lightboxOpen, images.length]);
 
   const toggleFav = async () => {
     if (!authed) { toast.error('Favorilere eklemek için giriş yapın'); router.push('/giris'); return; }
@@ -51,13 +64,21 @@ export default function ProductDetail({ product }) {
         <div className="grid lg:grid-cols-2 gap-12">
           {/* SOL: Görseller */}
           <div>
-            <div className="aspect-square bg-[#161616] rounded-lg overflow-hidden border border-amber-500/10">
-              <img src={images[activeImg]} alt={product.name} className="w-full h-full object-cover"/>
-            </div>
+            <button
+              onClick={() => setLightboxOpen(true)}
+              className="relative aspect-square w-full bg-[#161616] rounded-lg overflow-hidden border border-amber-500/10 group cursor-zoom-in"
+            >
+              <img src={images[activeImg]} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-500"/>
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition flex items-center justify-center">
+                <div className="opacity-0 group-hover:opacity-100 transition bg-black/60 backdrop-blur-sm rounded-full p-3">
+                  <ZoomIn className="text-amber-50" size={22}/>
+                </div>
+              </div>
+            </button>
             {images.length > 1 && (
               <div className="flex gap-3 mt-4">
                 {images.map((img, i) => (
-                  <button key={i} onClick={() => setActiveImg(i)} className={`w-20 h-20 rounded overflow-hidden border-2 ${i === activeImg ? 'border-amber-500' : 'border-amber-500/20'}`}>
+                  <button key={i} onClick={() => setActiveImg(i)} className={`w-20 h-20 rounded overflow-hidden border-2 transition ${i === activeImg ? 'border-amber-500' : 'border-amber-500/20 hover:border-amber-500/50'}`}>
                     <img src={img} className="w-full h-full object-cover"/>
                   </button>
                 ))}
@@ -193,7 +214,7 @@ export default function ProductDetail({ product }) {
                 <span className="px-5 text-amber-100">{qty}</span>
                 <button onClick={() => setQty(qty + 1)} className="px-4 py-3 text-amber-400">+</button>
               </div>
-              <button onClick={handleAdd} disabled={product.stock < 1} className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold py-4 rounded font-serif tracking-widest hover:from-amber-400 hover:to-amber-500 transition disabled:opacity-50">
+              <button onClick={handleAdd} disabled={product.stock < 1} className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold py-4 rounded font-serif tracking-widest hover:from-amber-400 hover:to-amber-500 hover:scale-[1.02] hover:shadow-[0_8px_30px_-8px_rgba(212,175,55,0.6)] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none">
                 {product.stock > 0 ? 'SEPETE EKLE' : 'STOKTA YOK'}
               </button>
               <button onClick={toggleFav} className={`p-4 border rounded transition ${isFav ? 'border-red-500 bg-red-500/10 text-red-400' : 'border-amber-500/30 text-amber-400 hover:bg-amber-500/10'}`} title="Favorilere ekle">
@@ -203,6 +224,42 @@ export default function ProductDetail({ product }) {
           </div>
         </div>
       </div>
+
+      {/* Lightbox / Tam ekran görüntüleme */}
+      {lightboxOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center" onClick={() => setLightboxOpen(false)}>
+          <button onClick={() => setLightboxOpen(false)} className="absolute top-5 right-5 text-amber-100/70 hover:text-amber-400 transition p-2">
+            <X size={28}/>
+          </button>
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); setActiveImg((i) => (i - 1 + images.length) % images.length); }}
+                className="absolute left-3 md:left-8 top-1/2 -translate-y-1/2 text-amber-100/70 hover:text-amber-400 transition p-2"
+              >
+                <ChevronLeft size={32}/>
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setActiveImg((i) => (i + 1) % images.length); }}
+                className="absolute right-3 md:right-8 top-1/2 -translate-y-1/2 text-amber-100/70 hover:text-amber-400 transition p-2"
+              >
+                <ChevronRight size={32}/>
+              </button>
+            </>
+          )}
+          <img
+            src={images[activeImg]}
+            alt={product.name}
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-[92vw] max-h-[85vh] object-contain select-none"
+          />
+          {images.length > 1 && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-amber-100/50 text-sm font-serif tracking-widest">
+              {activeImg + 1} / {images.length}
+            </div>
+          )}
+        </div>
+      )}
     </main>
   );
 }

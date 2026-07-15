@@ -106,6 +106,14 @@ h4 {
 .btn-amber {
   position: relative;
   overflow: hidden;
+  transition: transform 200ms ease, box-shadow 300ms ease;
+}
+.btn-amber:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 30px -8px rgba(212, 175, 55, 0.5);
+}
+.btn-amber:active {
+  transform: scale(0.98);
 }
 .btn-amber::after {
   content: '';
