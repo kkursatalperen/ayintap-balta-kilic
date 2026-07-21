@@ -37,10 +37,10 @@ async function route(request, { params }) {
   // ============ AUTH ============
   if (path === '/auth/register' && method === 'POST') {
     const { email, password, name, phone } = await readBody(request);
-    if (!email || !password) return err('Email ve Ãƒâ€¦Ã…Â¸ifre zorunlu', 400);
+    if (!email || !password) return err('Email ve Şifre zorunlu', 400);
     const users = await getCollection('users');
     const existing = await users.findOne({ email: email.toLowerCase() });
-    if (existing) return err('Bu e-posta zaten kayÃƒâ€Ã‚Â±tlÃƒâ€Ã‚Â±', 409);
+    if (existing) return err('Bu e-posta zaten kayıtlı', 409);
     const hash = await hashPassword(password);
     const user = { id: uuid(), email: email.toLowerCase(), name: name || '', phone: phone || '', passwordHash: hash, role: 'customer', isActive: true, createdAt: new Date() };
     await users.insertOne(user);
@@ -55,9 +55,9 @@ async function route(request, { params }) {
     const { email, password } = await readBody(request);
     const users = await getCollection('users');
     const user = await users.findOne({ email: (email || '').toLowerCase() });
-    if (!user) return err('KullanÃƒâ€Ã‚Â±cÃƒâ€Ã‚Â± bulunamadÃƒâ€Ã‚Â±', 404);
+    if (!user) return err('Kullanıcı bulunamadı', 404);
     const ok = await comparePassword(password, user.passwordHash);
-    if (!ok) return err('Ãƒâ€¦Ã‚Âifre hatalÃƒâ€Ã‚Â±', 401);
+    if (!ok) return err('Şifre hatalı', 401);
     const token = signToken({ id: user.id, role: user.role });
     const safe = { id: user.id, email: user.email, name: user.name, phone: user.phone, role: user.role };
     const res = json({ user: safe, token });
@@ -176,7 +176,7 @@ async function route(request, { params }) {
     const slug = path.split('/').pop();
     const col = await getCollection('products');
     const p = await col.findOne({ slug }, { projection: { _id: 0 } });
-    if (!p) return err('ÃƒÆ’Ã…â€œrÃƒÆ’Ã‚Â¼n bulunamadÃƒâ€Ã‚Â±', 404);
+    if (!p) return err('Ürün bulunamadı', 404);
     return json({ product: p });
   }
   if (path === '/admin/products' && method === 'POST') {
@@ -268,7 +268,7 @@ async function route(request, { params }) {
       statusHistory: [{ status: 'pending_payment', at: new Date(), note: 'Siparis olusturuldu' }],
       createdAt: new Date()
     };
-    // Stok otomatik dÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸
+    // Stok otomatik düş
     const productsCol = await getCollection('products');
     for (const item of doc.items) {
       await productsCol.updateOne(
@@ -515,6 +515,116 @@ async function route(request, { params }) {
     }
   }
 
+  // ============ REVIEWS (ÜRÜN & GENEL DEĞERLENDİRMELER) ============
+
+  // Kullanıcı fotoğraf yükler (review için) — sadece giriş yapmış kullanıcı, admin şart değil
+  if (path === '/upload/review-photo' && method === 'POST') {
+    const user = await getCurrentUser(request);
+    if (!user) return err('Giris yapmalisiniz', 401);
+    const { dataUrl } = await readBody(request);
+    if (!dataUrl) return err('Dosya gerekli', 400);
+    try {
+      const result = await uploadImage(dataUrl, 'ayintap/reviews');
+      return json(result);
+    } catch (e) {
+      console.error('[UPLOAD] review photo failed:', e?.message || e);
+      return err('Fotograf yuklenemedi', 500);
+    }
+  }
+
+  // Yorum gönder — ürün bazlı (productId dolu) ya da genel (productId boş)
+  if (path === '/reviews' && method === 'POST') {
+    const user = await getCurrentUser(request);
+    if (!user) return err('Yorum yapmak icin giris yapmalisiniz', 401);
+    const body = await readBody(request);
+    const { productId, rating, text, photos } = body;
+    if (!rating || rating < 1 || rating > 5) return err('Gecerli bir puan (1-5) girin', 400);
+    if (!text || text.trim().length < 5) return err('Yorum en az 5 karakter olmali', 400);
+
+    let productName = null, productSlug = null;
+    if (productId) {
+      const productsCol = await getCollection('products');
+      const p = await productsCol.findOne({ id: productId }, { projection: { name: 1, slug: 1 } });
+      if (!p) return err('Urun bulunamadi', 404);
+      productName = p.name; productSlug = p.slug;
+    }
+
+    const reviewsCol = await getCollection('reviews');
+    const review = {
+      id: uuid(),
+      productId: productId || null,
+      productName,
+      productSlug,
+      userId: user.id,
+      userName: user.name || 'Müşteri',
+      rating: Number(rating),
+      text: text.trim().slice(0, 1000),
+      photos: Array.isArray(photos) ? photos.slice(0, 6) : [],
+      status: 'pending',
+      featured: false,
+      createdAt: new Date(),
+    };
+    await reviewsCol.insertOne(review);
+    delete review._id;
+    return json({ review, message: 'Yorumunuz alindi, onaylandiktan sonra yayinlanacak' });
+  }
+
+  // Bir ürünün onaylı yorumlarını listele — herkese açık
+  if (path === '/reviews' && method === 'GET') {
+    const { searchParams } = new URL(request.url);
+    const productId = searchParams.get('productId');
+    const featured = searchParams.get('featured');
+    const reviewsCol = await getCollection('reviews');
+    const query = { status: 'approved' };
+    if (productId) query.productId = productId;
+    if (featured === 'true') query.featured = true;
+    const list = await reviewsCol.find(query, { projection: { _id: 0 } }).sort({ createdAt: -1 }).limit(featured === 'true' ? 12 : 100).toArray();
+    return json({ reviews: list });
+  }
+
+  // Admin: tüm yorumları (durum filtresiyle) listele
+  if (path === '/admin/reviews' && method === 'GET') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get('status');
+    const reviewsCol = await getCollection('reviews');
+    const query = status ? { status } : {};
+    const list = await reviewsCol.find(query, { projection: { _id: 0 } }).sort({ createdAt: -1 }).limit(500).toArray();
+    return json({ reviews: list });
+  }
+
+  // Admin: yorumu onayla/reddet/öne çıkar
+  if (path.startsWith('/admin/reviews/') && method === 'PUT') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const id = path.split('/').pop();
+    const body = await readBody(request);
+    const update = {};
+    if (body.status !== undefined) update.status = body.status;
+    if (body.featured !== undefined) update.featured = !!body.featured;
+    const reviewsCol = await getCollection('reviews');
+    await reviewsCol.updateOne({ id }, { $set: update });
+
+    // Ürün bazlı ise, onaylanan yorumlara göre ürünün rating/reviewCount alanlarını güncelle
+    const review = await reviewsCol.findOne({ id });
+    if (review?.productId) {
+      const approved = await reviewsCol.find({ productId: review.productId, status: 'approved' }).toArray();
+      const count = approved.length;
+      const avg = count ? approved.reduce((s, r) => s + r.rating, 0) / count : 0;
+      const productsCol = await getCollection('products');
+      await productsCol.updateOne({ id: review.productId }, { $set: { rating: Math.round(avg * 10) / 10, reviewCount: count } });
+    }
+    return json({ ok: true });
+  }
+
+  // Admin: yorumu sil
+  if (path.startsWith('/admin/reviews/') && method === 'DELETE') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const id = path.split('/').pop();
+    const reviewsCol = await getCollection('reviews');
+    await reviewsCol.deleteOne({ id });
+    return json({ ok: true });
+  }
+
   // ============ ME (USER ENDPOINTS) ============
   if (path === '/me/orders' && method === 'GET') {
     const user = await getCurrentUser(request); if (!user) return err('Giris yapmalisiniz', 401);
@@ -538,7 +648,7 @@ async function route(request, { params }) {
     const { oldPassword, newPassword } = await readBody(request);
     if (!newPassword || newPassword.length < 6) return err('Yeni sifre en az 6 karakter olmali', 400);
     const ok = await comparePassword(oldPassword || '', user.passwordHash);
-    if (!ok) return err('Mevcut sifre hatali', 401);
+    if (!ok) return err('Şifre hatalı', 401);
     const hash = await hashPassword(newPassword);
     const users = await getCollection('users');
     await users.updateOne({ id: user.id }, { $set: { passwordHash: hash, updatedAt: new Date() } });
@@ -727,7 +837,7 @@ async function route(request, { params }) {
     const all = await col.find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray();
     return json({ orders: all });
   }
-  // ============ ADMIN KULLANICI YÃƒâ€“NETÃ„Â°MÃ„Â° ============
+  // ============ ADMIN KULLANICI YÖNETİMİ ============
   if (path === '/admin/users' && method === 'GET') {
     const user = await getCurrentUser(request);
     const auth = requireAdmin(user);
@@ -747,7 +857,7 @@ async function route(request, { params }) {
     const users = await col.find(filter, {
       projection: { passwordHash: 0, _id: 0 }
     }).sort({ createdAt: -1 }).limit(200).toArray();
-    // Her kullanÃ„Â±cÃ„Â± iÃƒÂ§in toplam harcama ve sipariÃ…Å¸ sayÃ„Â±sÃ„Â±nÃ„Â± hesapla
+    // Her kullanıcı için toplam harcama ve sipariş sayısını hesapla
     const enriched = await Promise.all(users.map(async (u) => {
       const orders = await ordersCol.aggregate([
         { $match: { userId: u.id } },
@@ -773,7 +883,7 @@ async function route(request, { params }) {
     const favoritesCol = await getCollection('favorites');
     const productsCol = await getCollection('products');
     const u = await col.findOne({ id }, { projection: { passwordHash: 0, _id: 0 } });
-    if (!u) return err('KullanÃ„Â±cÃ„Â± bulunamadÃ„Â±', 404);
+    if (!u) return err('Kullanıcı bulunamadı', 404);
     const [orders, addresses, favorites] = await Promise.all([
       ordersCol.find({ userId: id }, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray(),
       addressesCol.find({ userId: id }, { projection: { _id: 0 } }).toArray(),
@@ -806,7 +916,7 @@ async function route(request, { params }) {
     const u = await col.findOne({ id }, { projection: { passwordHash: 0, _id: 0 } });
     return json({ user: u });
   }
-  // ============ KUPON SÃ„Â°STEMÃ„Â° ============
+  // ============ KUPON SÃ„°STEMÃ„° ============
   if (path === '/admin/coupons' && method === 'GET') {
     const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
     const col = await getCollection('coupons');
@@ -847,10 +957,10 @@ async function route(request, { params }) {
     const { code, total } = await readBody(request);
     const col = await getCollection('coupons');
     const coupon = await col.findOne({ code: (code || '').toUpperCase(), isActive: true });
-    if (!coupon) return err('GeÃƒÂ§ersiz kupon kodu', 404);
-    if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) return err('Kupon sÃƒÂ¼resi dolmuÃ…Å¸', 400);
-    if (coupon.maxUses > 0 && coupon.usedCount >= coupon.maxUses) return err('Kupon kullanÃ„Â±m limiti doldu', 400);
-    if (coupon.minOrder > 0 && total < coupon.minOrder) return err(`Bu kupon iÃƒÂ§in minimum sipariÃ…Å¸ tutarÃ„Â± ${coupon.minOrder.toLocaleString('tr-TR')}Ã¢â€šÂº`, 400);
+    if (!coupon) return err('GeÃƒ§ersiz kupon kodu', 404);
+    if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) return err('Kupon sÃƒ¼resi dolmuÃ…Ÿ', 400);
+    if (coupon.maxUses > 0 && coupon.usedCount >= coupon.maxUses) return err('Kupon kullanÃ„±m limiti doldu', 400);
+    if (coupon.minOrder > 0 && total < coupon.minOrder) return err(`Bu kupon iÃƒ§in minimum sipariÃ…Ÿ tutarÃ„± ${coupon.minOrder.toLocaleString('tr-TR')}Ã¢â€šº`, 400);
     const discountAmount = coupon.type === 'percent' ? Math.round(total * coupon.discount / 100) : coupon.discount;
     return json({ coupon, discountAmount });
   }
@@ -913,7 +1023,7 @@ async function route(request, { params }) {
     await col.deleteOne({ id });
     return json({ ok: true });
   }
-  return err('Endpoint bulunamadÃƒâ€Ã‚Â±: ' + path, 404);
+  return err('Endpoint bulunamadı: ' + path, 404);
   } catch (e) {
     console.error('[API ERROR]', path, method, e);
     return err('Sunucu hatasi olustu, lutfen tekrar deneyin', 500);

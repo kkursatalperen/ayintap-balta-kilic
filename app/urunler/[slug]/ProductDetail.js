@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Star, Truck, Shield, Hammer, Flame, Check, Heart, AlertTriangle, X, ZoomIn, ChevronLeft, ChevronRight, ChevronDown, Facebook, Send } from 'lucide-react';
+import { Star, Truck, Shield, Hammer, Flame, Check, Heart, AlertTriangle, X, ZoomIn, ChevronLeft, ChevronRight, ChevronDown, Facebook, Send, ImagePlus, Loader2 } from 'lucide-react';
 import { useCart } from '@/lib/store';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -19,10 +19,55 @@ export default function ProductDetail({ product }) {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [deliveryOpen, setDeliveryOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
+  const [reviews, setReviews] = useState([]);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, text: '', photos: [] });
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const add = useCart((s) => s.add);
   const router = useRouter();
   const images = product.images?.length ? product.images : [product.image];
   const finalPrice = product.price + (personalize ? (product.personalizationPrice || 250) : 0) + (woodenBox ? (product.woodenBoxPrice || 0) : 0);
+
+  const loadReviews = () => {
+    fetch(`/api/reviews?productId=${product.id}`).then(r => r.json()).then(d => setReviews(d.reviews || [])).catch(() => {});
+  };
+
+  useEffect(() => { loadReviews(); }, [product.id]);
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const res = await fetch('/api/upload/review-photo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dataUrl: reader.result }) });
+        const d = await res.json();
+        if (d.url) setReviewForm(f => ({ ...f, photos: [...f.photos, d.url].slice(0, 6) }));
+        else toast.error(d.error || 'Fotoğraf yüklenemedi');
+      } catch { toast.error('Fotoğraf yüklenemedi'); }
+      setUploadingPhoto(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const submitReview = async () => {
+    if (!authed) { toast.error('Yorum yapmak için giriş yapın'); router.push('/giris'); return; }
+    if (!reviewForm.text.trim() || reviewForm.text.trim().length < 5) { toast.error('Lütfen en az birkaç kelimelik bir yorum yazın'); return; }
+    setReviewSubmitting(true);
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id, rating: reviewForm.rating, text: reviewForm.text, photos: reviewForm.photos }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error);
+      toast.success('Yorumunuz alındı, onaylandıktan sonra yayınlanacak');
+      setReviewForm({ rating: 5, text: '', photos: [] });
+    } catch (e) { toast.error(e.message || 'Yorum gönderilemedi'); }
+    setReviewSubmitting(false);
+  };
 
   useEffect(() => {
     setShareUrl(window.location.href);
@@ -269,7 +314,93 @@ export default function ProductDetail({ product }) {
           </div>
         </div>
 
-        {/* Tamamlayıcı / İlginizi Çekebilecek Ürünler */}
+        {/* Değerlendirmeler */}
+        <div className="mt-20 border-t border-amber-500/10 pt-14">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="h-px w-10 bg-amber-500/40"/>
+            <h2 className="font-serif text-2xl text-amber-50">Müşteri Değerlendirmeleri {reviews.length > 0 && <span className="text-amber-100/40 text-lg">({reviews.length})</span>}</h2>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-10">
+            {/* Yorum listesi */}
+            <div className="lg:col-span-2 space-y-5">
+              {reviews.length === 0 && (
+                <p className="text-amber-100/40 text-sm">Bu ürün için henüz onaylı bir değerlendirme yok. İlk yorumu siz yazın!</p>
+              )}
+              {reviews.map((r) => (
+                <div key={r.id} className="border border-amber-500/10 rounded-lg p-5 bg-black/20">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-serif text-amber-100">{r.userName}</span>
+                    <div className="flex gap-0.5">
+                      {[...Array(5)].map((_, i) => <Star key={i} size={14} className={i < r.rating ? 'text-amber-500 fill-amber-500' : 'text-amber-500/20'}/>)}
+                    </div>
+                  </div>
+                  <p className="text-amber-100/70 text-sm leading-relaxed">{r.text}</p>
+                  {r.photos?.length > 0 && (
+                    <div className="flex gap-2 mt-3 flex-wrap">
+                      {r.photos.map((p, i) => (
+                        <img key={i} src={p} alt="" className="w-20 h-20 object-cover rounded border border-amber-500/20"/>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-amber-100/30 text-xs mt-3">{new Date(r.createdAt).toLocaleDateString('tr-TR')}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Yorum formu */}
+            <div className="border border-amber-500/20 rounded-lg p-6 bg-amber-500/5 h-fit">
+              <h3 className="font-serif text-amber-400 text-sm tracking-widest mb-4">DEĞERLENDİRME YAZ</h3>
+              {!authed ? (
+                <div className="text-sm text-amber-100/60">
+                  Yorum yapmak için <button onClick={() => router.push('/giris')} className="text-amber-400 underline">giriş yapmalısınız</button>.
+                </div>
+              ) : (
+                <>
+                  <div className="flex gap-1 mb-4">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button key={n} onClick={() => setReviewForm(f => ({ ...f, rating: n }))}>
+                        <Star size={22} className={n <= reviewForm.rating ? 'text-amber-500 fill-amber-500' : 'text-amber-500/20'}/>
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={reviewForm.text}
+                    onChange={(e) => setReviewForm(f => ({ ...f, text: e.target.value }))}
+                    placeholder="Ürün hakkındaki deneyiminizi paylaşın..."
+                    rows={4}
+                    maxLength={1000}
+                    className="w-full bg-black/40 border border-amber-500/30 rounded px-3 py-2.5 text-amber-50 text-sm focus:outline-none focus:border-amber-500 resize-none"
+                  />
+
+                  {reviewForm.photos.length > 0 && (
+                    <div className="flex gap-2 mt-3 flex-wrap">
+                      {reviewForm.photos.map((p, i) => (
+                        <div key={i} className="relative">
+                          <img src={p} alt="" className="w-16 h-16 object-cover rounded border border-amber-500/30"/>
+                          <button onClick={() => setReviewForm(f => ({ ...f, photos: f.photos.filter((_, j) => j !== i) }))} className="absolute -top-1.5 -right-1.5 bg-black rounded-full p-0.5 border border-amber-500/40">
+                            <X size={10} className="text-amber-100"/>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <label className="mt-3 flex items-center gap-2 text-xs text-amber-400 cursor-pointer w-fit">
+                    {uploadingPhoto ? <Loader2 size={14} className="animate-spin"/> : <ImagePlus size={14}/>}
+                    {uploadingPhoto ? 'Yükleniyor...' : 'Fotoğraf Ekle (opsiyonel)'}
+                    <input type="file" accept="image/*" onChange={handlePhotoUpload} disabled={uploadingPhoto} className="hidden"/>
+                  </label>
+
+                  <button onClick={submitReview} disabled={reviewSubmitting} className="mt-4 w-full bg-amber-500 text-black font-bold py-2.5 rounded text-sm font-serif tracking-widest hover:bg-amber-400 transition disabled:opacity-50">
+                    {reviewSubmitting ? 'Gönderiliyor...' : 'Yorumu Gönder'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
         {relatedProducts.length > 0 && (
           <div className="mt-20">
             <div className="flex items-center gap-3 mb-8">

@@ -237,16 +237,31 @@ function Story({ data }) {
 }
 
 function Testimonials({ data }) {
+  const [realReviews, setRealReviews] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/reviews?featured=true').then(r => r.json()).then(d => {
+      setRealReviews(d.reviews || []);
+    }).catch(() => setRealReviews([]));
+  }, []);
+
+  const items = (realReviews && realReviews.length > 0)
+    ? realReviews.map(r => ({ name: r.userName, text: r.text, rating: r.rating, photos: r.photos, productName: r.productName }))
+    : (data?.items || []);
+
   return (
     <section className="py-24 px-6 bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto text-center">
         <h2 className="font-serif text-4xl md:text-5xl text-amber-50 mb-14">{data?.title}</h2>
         <div className="grid md:grid-cols-3 gap-6">
-          {(data?.items || []).map((t, i) => (
+          {items.map((t, i) => (
             <div key={i} className="bg-[#161616] border border-amber-500/10 p-8 rounded-lg text-left">
+              {t.photos?.[0] && (
+                <img src={t.photos[0]} alt="" className="w-full h-40 object-cover rounded mb-4"/>
+              )}
               <div className="flex gap-1 mb-4">{[...Array(t.rating)].map((_, i) => <Star key={i} size={16} className="text-amber-500 fill-amber-500"/>)}</div>
               <p className="text-amber-100/80 italic font-serif text-lg leading-relaxed">"{t.text}"</p>
-              <p className="mt-6 text-amber-400 tracking-widest text-sm">— {t.name}</p>
+              <p className="mt-6 text-amber-400 tracking-widest text-sm">— {t.name}{t.productName && <span className="text-amber-100/30"> · {t.productName}</span>}</p>
             </div>
           ))}
         </div>

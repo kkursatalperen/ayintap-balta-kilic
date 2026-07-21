@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import {
   LayoutDashboard, Package, LayoutGrid, Settings, ShoppingBag, LogOut, Plus, Edit, Trash2,
-  ChevronUp, ChevronDown, Eye, EyeOff, Upload, Save, X, Image as ImageIcon, FileText, Truck, Check, Users, Search, Ban, UserCheck, Mail, Phone, MapPin, Heart, ShoppingCart, Star,
+  ChevronUp, ChevronDown, Eye, EyeOff, Upload, Save, X, Image as ImageIcon, FileText, Truck, Check, Users, Search, Ban, UserCheck, Mail, Phone, MapPin, Heart, ShoppingCart, Star, MessageSquare,
 } from 'lucide-react';
 import Logo from '@/components/Logo';
 import CouponsPanel from './CouponsPanel';
 import AdminErrorBoundary from '@/components/AdminErrorBoundary';
+import ReviewsPanel from './ReviewsPanel';
 import CategoriesTab from './CategoriesTab';
 import UsersTab from './UsersTab';
 
@@ -85,6 +86,7 @@ export default function AdminApp() {
             { id: 'categories', icon: LayoutGrid, label: 'Kategoriler' },
             { id: 'settings', icon: Settings, label: 'Site Ayarları' },
             { id: 'users', icon: Users, label: 'Üyeler' },
+            { id: 'reviews', icon: MessageSquare, label: 'Yorumlar' },
             { id: 'coupons', icon: Star, label: 'Kuponlar' },
           ].map((t) => (
             <button key={t.id} onClick={() => { setTab(t.id); setSidebarOpen(false); }}
@@ -114,6 +116,7 @@ export default function AdminApp() {
           {tab === 'settings' && <SiteSettings/>}
           {tab === 'users' && <UsersTab/>}
           {tab === 'coupons' && <CouponsPanel/>}
+          {tab === 'reviews' && <ReviewsPanel/>}
         </AdminErrorBoundary>
       </main>
     </div>
