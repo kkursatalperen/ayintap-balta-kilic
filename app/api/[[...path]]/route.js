@@ -12,6 +12,7 @@ import {
   sendWelcomeEmail,
 } from '@/lib/email';
 import { getPaytrToken, verifyPaytrCallback, isPaytrConfigured } from '@/lib/paytr';
+import { createShipment, getPriceComparison, confirmShippingPrice, getShipmentBarcode, verifyKargonomiSignature, mapKargonomiStatus, isKargonomiConfigured } from '@/lib/kargonomi';
 
 const json = (data, status = 200) => NextResponse.json(data, { status });
 const err = (msg, status = 400) => NextResponse.json({ error: msg }, { status });
@@ -406,6 +407,111 @@ async function route(request, { params }) {
     } catch (e) {
       console.error('[PAYTR] callback error:', e?.message || e);
       return new NextResponse('PAYTR notification failed', { status: 500 });
+    }
+  }
+
+  // ============ KARGO (KARGONOMI) ============
+  // Admin: siparişten Kargonomi'de taslak gönderi oluşturur, fiyat tekliflerini döner
+  if (path === '/admin/kargonomi/create-shipment' && method === 'POST') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    if (!isKargonomiConfigured()) return err('Kargonomi henuz yapilandirilmadi (KARGONOMI_API_TOKEN eksik)', 503);
+    const body = await readBody(request);
+    const { orderNumber } = body;
+    if (!orderNumber) return err('orderNumber zorunlu', 400);
+
+    const ordersCol = await getCollection('orders');
+    const order = await ordersCol.findOne({ orderNumber });
+    if (!order) return err('Siparis bulunamadi', 404);
+
+    try {
+      const result = await createShipment(order);
+      const priceComparison = await getPriceComparison(result.id);
+      await ordersCol.updateOne({ orderNumber }, { $set: { kargonomiShipmentId: result.id, kargonomiStatus: result.status, updatedAt: new Date() } });
+      return json({ shipment: result, priceOptions: priceComparison.shipping_provider_with_price });
+    } catch (e) {
+      console.error('[KARGONOMI] create-shipment failed:', e?.message || e);
+      return err(e?.message || 'Kargonomi gonderi olusturulamadi', 500);
+    }
+  }
+
+  // Admin: kargo firmasını seçip gönderiyi işleme hazır hale getirir, barkodu alır
+  if (path === '/admin/kargonomi/confirm' && method === 'POST') {
+    const user = await getCurrentUser(request); const auth = requireAdmin(user); if (!auth.ok) return err(auth.msg, auth.status);
+    const body = await readBody(request);
+    const { orderNumber, shippingProviderId } = body;
+    if (!orderNumber) return err('orderNumber zorunlu', 400);
+
+    const ordersCol = await getCollection('orders');
+    const order = await ordersCol.findOne({ orderNumber });
+    if (!order?.kargonomiShipmentId) return err('Bu siparis icin once gonderi olusturulmali', 400);
+
+    try {
+      const result = await confirmShippingPrice(order.kargonomiShipmentId, shippingProviderId ?? -1);
+      let barcodeBase64 = null;
+      try {
+        const bc = await getShipmentBarcode(order.kargonomiShipmentId, 'pdf');
+        barcodeBase64 = bc?.data || bc?.barcode || null;
+      } catch (e) { console.error('[KARGONOMI] barcode fetch failed:', e?.message || e); }
+
+      const history = order.statusHistory || [];
+      history.push({ status: 'kargonomi_confirmed', at: new Date(), note: 'Kargo firması seçildi, gönderi işleme alındı' });
+      await ordersCol.updateOne({ orderNumber }, {
+        $set: {
+          kargonomiStatus: result.shipment?.status || 'ready',
+          kargonomiProvider: result.shipment?.shipping_provider_name || null,
+          kargonomiBarcodePdf: barcodeBase64,
+          statusHistory: history,
+          updatedAt: new Date(),
+        }
+      });
+      return json({ shipment: result.shipment, barcodeBase64 });
+    } catch (e) {
+      console.error('[KARGONOMI] confirm failed:', e?.message || e);
+      return err(e?.message || 'Kargonomi onay hatasi', 500);
+    }
+  }
+
+  // Kargonomi webhook -- PUBLIC endpoint, Kargonomi sunuculari cagirir. Auth YOK.
+  // shipment.updated event'inde tetiklenir, imza X-Webhook-Signature ile dogrulanir.
+  if (path === '/webhooks/kargonomi' && method === 'POST') {
+    try {
+      const rawBody = await request.text();
+      const signature = request.headers.get('x-webhook-signature');
+      if (!verifyKargonomiSignature(rawBody, signature)) {
+        console.error('[KARGONOMI] webhook signature mismatch');
+        return new NextResponse('invalid signature', { status: 401 });
+      }
+      const payload = JSON.parse(rawBody);
+      const shipment = payload.shipment;
+      if (!shipment?.id) return new NextResponse('OK', { status: 200 });
+
+      const ordersCol = await getCollection('orders');
+      const order = await ordersCol.findOne({ kargonomiShipmentId: shipment.id });
+      if (order) {
+        const mappedStatus = mapKargonomiStatus(shipment.status);
+        const history = order.statusHistory || [];
+        history.push({ status: `kargonomi_${shipment.status}`, at: new Date(), note: shipment.status_label || shipment.status });
+        const updates = {
+          kargonomiStatus: shipment.status,
+          statusHistory: history,
+          updatedAt: new Date(),
+        };
+        if (shipment.shipping_webservice_tracking_code) updates.trackingCode = shipment.shipping_webservice_tracking_code;
+        if (shipment.shipping_provider_name) updates.carrier = shipment.shipping_provider_name;
+        if (mappedStatus) updates.status = mappedStatus;
+        await ordersCol.updateOne({ kargonomiShipmentId: shipment.id }, { $set: updates });
+
+        if (mappedStatus === 'shipped' && shipment.shipping_webservice_tracking_code) {
+          try {
+            const toEmail = order.customer?.email;
+            if (toEmail) await sendOrderStatusUpdateEmail({ to: toEmail, orderNumber: order.orderNumber, status: 'shipped', note: `Takip No: ${shipment.shipping_webservice_tracking_code} (${shipment.shipping_provider_name || ''})` });
+          } catch (e) { console.error('[EMAIL] shipped notify failed:', e?.message || e); }
+        }
+      }
+      return new NextResponse('OK', { status: 200 });
+    } catch (e) {
+      console.error('[KARGONOMI] webhook error:', e?.message || e);
+      return new NextResponse('error', { status: 500 });
     }
   }
 

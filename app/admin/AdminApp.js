@@ -683,6 +683,35 @@ function OrderEditor({ order, onClose }) {
     note: '',
   });
   const [saving, setSaving] = useState(false);
+  const [kargonomiLoading, setKargonomiLoading] = useState(false);
+  const [priceOptions, setPriceOptions] = useState(null);
+  const [selectedProvider, setSelectedProvider] = useState(null);
+  const [barcodeBase64, setBarcodeBase64] = useState(order.kargonomiBarcodePdf || null);
+
+  const createKargonomiShipment = async () => {
+    setKargonomiLoading(true);
+    try {
+      const res = await fetch('/api/admin/kargonomi/create-shipment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderNumber: order.orderNumber }) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error);
+      setPriceOptions(d.priceOptions || []);
+      toast.success('Gönderi oluşturuldu, kargo firması seçin');
+    } catch (e) { toast.error(e.message || 'Kargonomi hatası'); }
+    setKargonomiLoading(false);
+  };
+
+  const confirmKargonomiShipment = async () => {
+    setKargonomiLoading(true);
+    try {
+      const res = await fetch('/api/admin/kargonomi/confirm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderNumber: order.orderNumber, shippingProviderId: selectedProvider ?? -1 }) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error);
+      setBarcodeBase64(d.barcodeBase64);
+      toast.success('Gönderi onaylandı, etiket hazır');
+    } catch (e) { toast.error(e.message || 'Kargonomi onay hatası'); }
+    setKargonomiLoading(false);
+  };
+
   const save = async () => {
     setSaving(true);
     const res = await fetch('/api/admin/orders/' + order.id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
@@ -721,6 +750,39 @@ function OrderEditor({ order, onClose }) {
           </Field>
           <Field label="Takip Kodu"><input value={form.trackingCode} onChange={(e) => setForm({ ...form, trackingCode: e.target.value })} className={inp}/></Field>
           <div className="col-span-2"><Field label="Not (statü değişimine eklenir)"><textarea rows={2} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} className={inp}/></Field></div>
+
+          <div className="col-span-2 border border-amber-500/20 rounded-lg p-4 bg-black/20">
+            <h4 className="font-serif text-amber-400 text-sm tracking-widest mb-3">KARGONOMI — OTOMATİK GÖNDERİ</h4>
+            {order.kargonomiShipmentId && <p className="text-xs text-amber-100/40 mb-3">Gönderi ID: {order.kargonomiShipmentId} · Durum: {order.kargonomiStatus || '—'}</p>}
+
+            {!priceOptions && !barcodeBase64 && (
+              <button onClick={createKargonomiShipment} disabled={kargonomiLoading} className="bg-amber-500 text-black px-4 py-2 rounded text-sm font-serif tracking-wide hover:bg-amber-400 transition disabled:opacity-50">
+                {kargonomiLoading ? 'Oluşturuluyor...' : 'Kargonomi\'de Gönderi Oluştur'}
+              </button>
+            )}
+
+            {priceOptions && !barcodeBase64 && (
+              <div className="space-y-2">
+                <p className="text-xs text-amber-100/60 mb-2">Kargo firması seçin:</p>
+                {priceOptions.map((p) => (
+                  <label key={p.id} className="flex items-center gap-3 p-2 border border-amber-500/10 rounded cursor-pointer hover:bg-amber-500/5">
+                    <input type="radio" name="kargonomiProvider" checked={selectedProvider === p.id} onChange={() => setSelectedProvider(p.id)} className="accent-amber-500"/>
+                    <span className="text-amber-100 text-sm flex-1">{p.name}</span>
+                    <span className="text-amber-400 text-sm font-mono">{p.price || '—'}</span>
+                  </label>
+                ))}
+                <button onClick={confirmKargonomiShipment} disabled={kargonomiLoading} className="mt-2 bg-amber-500 text-black px-4 py-2 rounded text-sm font-serif tracking-wide hover:bg-amber-400 transition disabled:opacity-50">
+                  {kargonomiLoading ? 'Onaylanıyor...' : 'Onayla ve Etiket Al'}
+                </button>
+              </div>
+            )}
+
+            {barcodeBase64 && (
+              <a href={`data:application/pdf;base64,${barcodeBase64}`} download={`kargo-etiketi-${order.orderNumber}.pdf`} className="inline-flex items-center gap-2 bg-emerald-700 text-amber-50 px-4 py-2 rounded text-sm font-serif tracking-wide hover:bg-emerald-600 transition">
+                Kargo Etiketini İndir (PDF)
+              </a>
+            )}
+          </div>
 
           <div className="col-span-2">
             <h4 className="font-serif text-amber-400 text-sm tracking-widest mb-3 mt-2">DURUM GEÇMİŞİ</h4>
@@ -1468,4 +1530,3 @@ function UserDetail({ user: initialUser, onClose }) {
   );
 }
 }
-
