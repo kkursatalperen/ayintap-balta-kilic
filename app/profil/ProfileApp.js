@@ -159,7 +159,7 @@ function OrderCard({ order }) {
           {/* Timeline */}
           {order.status !== 'cancelled' && (
             <div>
-              <h4 className="font-serif text-amber-400 text-sm tracking-widest mb-4">SÄ°PARÄ°Å DURUMU</h4>
+              <h4 className="font-serif text-amber-400 text-sm tracking-widest mb-4">SİPARİŞ DURUMU</h4>
               <div className="flex items-center justify-between relative">
                 <div className="absolute left-0 right-0 top-3 h-px bg-amber-500/20"/>
                 <div className="absolute left-0 top-3 h-px bg-amber-500" style={{ width: `${(currentIdx / (STATUS_TIMELINE.length - 1)) * 100}%` }}/>
@@ -305,7 +305,7 @@ function AddressEditor({ address, onClose }) {
           <input className={inp} placeholder="Posta Kodu" value={form.zipCode} onChange={(e) => setForm({ ...form, zipCode: e.target.value })}/>
           <textarea className={inp + ' col-span-2'} rows={2} placeholder="Adres" value={form.addressLine} onChange={(e) => setForm({ ...form, addressLine: e.target.value })}/>
           <label className="col-span-2 flex items-center gap-2 text-amber-100">
-            <input type="checkbox" checked={form.isDefault} onChange={(e) => setForm({ ...form, isDefault: e.target.checked })} className="w-4 h-4 accent-amber-500"/> VarsayÄ±lan adres
+            <input type="checkbox" checked={form.isDefault} onChange={(e) => setForm({ ...form, isDefault: e.target.checked })} className="w-4 h-4 accent-amber-500"/> Varsayılan adres
           </label>
         </div>
         <div className="mt-6 flex gap-3">
